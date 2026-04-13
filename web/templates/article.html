@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Article.Title}} - 本地个人博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>本地个人博客</h1>
+        <nav>
+            <a href="/">首页</a>
+            <a href="/new">写文章</a>
+            <a href="/message">留言板</a>
+        </nav>
+    </header>
+    <main>
+        <section id="article-detail">
+            <h2>{{.Article.Title}}</h2>
+            <div id="article-meta">{{.Article.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
+            <div id="article-tags">
+                {{range .Tags}}
+                <span class="tag">{{.Name}}</span>
+                {{end}}
+            </div>
+            <div id="article-content">{{.Article.Content}}</div>
+        </section>
+        <section id="comments">
+            <h3>评论</h3>
+            <div id="comment-form">
+                <form method="post" action="/article?id={{.Article.ID}}">
+                    <textarea name="comment" rows="3" placeholder="写下你的评论..."></textarea>
+                    <button type="submit">提交评论</button>
+                </form>
+            </div>
+            <div id="comment-list">
+                {{range .Comments}}
+                <div class="comment-item">
+                    <p>{{.Content}}</p>
+                    <div class="comment-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
+                </div>
+                {{else}}
+                <p>暂无评论</p>
+                {{end}}
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 本地个人博客</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 - 本地个人博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>本地个人博客</h1>
+        <nav>
+            <a href="/">首页</a>
+            <a href="/new">写文章</a>
+            <a href="/message">留言板</a>
+        </nav>
+    </header>
+    <main>
+        <section id="message-board">
+            <h2>留言板</h2>
+            <div id="message-form">
+                <form method="post" action="/message">
+                    <div class="form-group">
+                        <label for="name">姓名</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="content">留言内容</label>
+                        <textarea id="content" name="content" rows="3" required></textarea>
+                    </div>
+                    <button type="submit">提交留言</button>
+                </form>
+            </div>
+            <div id="message-list">
+                {{range .}}
+                <div class="message-item">
+                    <div class="message-header">
+                        <span class="message-name">{{.Name}}</span>
+                        <span class="message-time">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</span>
+                    </div>
+                    <div class="message-content">{{.Content}}</div>
+                </div>
+                {{else}}
+                <p>暂无留言</p>
+                {{end}}
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 本地个人博客</p>
+    </footer>
+</body>
+</html>

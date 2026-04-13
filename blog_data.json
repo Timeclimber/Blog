@@ -1,0 +1,50 @@
+{
+  "articles": [
+    {
+      "id": 1,
+      "title": "测试文章",
+      "content": "这是一篇测试文章，用来测试发布文章功能是否正常工作。\r\n\r\n希望这次能够成功发布！",
+      "created_at": "2026-04-12T13:22:41.3085682+08:00",
+      "updated_at": "2026-04-12T13:22:41.3085682+08:00"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "article_id": 1,
+      "content": "sd",
+      "created_at": "2026-04-12T13:23:01.145489+08:00"
+    }
+  ],
+  "tags": [
+    {
+      "id": 1,
+      "name": "测试"
+    },
+    {
+      "id": 2,
+      "name": "文章"
+    },
+    {
+      "id": 3,
+      "name": "功能"
+    }
+  ],
+  "article_tags": [
+    {
+      "article_id": 1,
+      "tag_id": 1
+    },
+    {
+      "article_id": 1,
+      "tag_id": 2
+    },
+    {
+      "article_id": 1,
+      "tag_id": 3
+    }
+  ],
+  "next_article_id": 2,
+  "next_comment_id": 2,
+  "next_tag_id": 4
+}

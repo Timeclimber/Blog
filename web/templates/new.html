@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写文章 - 本地个人博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>本地个人博客</h1>
+        <nav>
+            <a href="/">首页</a>
+            <a href="/new">写文章</a>
+            <a href="/message">留言板</a>
+        </nav>
+    </header>
+    <main>
+        <section id="new-article">
+            <h2>写文章</h2>
+            <form id="article-form" method="post" action="/new">
+                <div class="form-group">
+                    <label for="title">标题</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="content">内容</label>
+                    <textarea id="content" name="content" rows="10" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="tags">标签（用逗号分隔）</label>
+                    <input type="text" id="tags" name="tags">
+                </div>
+                <button type="submit">发布文章</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 本地个人博客</p>
+    </footer>
+</body>
+</html>
