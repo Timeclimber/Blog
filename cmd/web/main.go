@@ -77,6 +77,10 @@ func main() {
 		c.HTML(200, "register.html", nil)
 	})
 
+	// 留言板页面
+	r.GET("/message", handlers.GetMessages)
+	r.POST("/message", handlers.CreateMessage)
+
 	// 启动服务器
 	log.Println("服务器启动在 http://localhost:8080")
 	err = r.Run(":8080")

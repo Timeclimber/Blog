@@ -103,6 +103,19 @@ func createTables() error {
 		return err
 	}
 
+	// 创建留言板表
+	_, err = DB.Exec(`
+	CREATE TABLE IF NOT EXISTS messages (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		content TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	`)
+	if err != nil {
+		return err
+	}
+
 	// 创建索引
 	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_comments_article_id ON comments(article_id)`)
 	if err != nil {

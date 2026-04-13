@@ -273,3 +273,34 @@ func GetTagsByArticleID(articleID int) ([]*models.Tag, error) {
 
 	return tags, nil
 }
+
+// 留言板相关操作
+
+// GetAllMessages 获取所有留言
+func GetAllMessages() ([]*models.Message, error) {
+	query := `SELECT id, name, content, created_at FROM messages ORDER BY created_at DESC`
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := []*models.Message{}
+	for rows.Next() {
+		message := &models.Message{}
+		err := rows.Scan(&message.ID, &message.Name, &message.Content, &message.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, message)
+	}
+
+	return messages, nil
+}
+
+// CreateMessage 创建新留言
+func CreateMessage(name, content string) error {
+	query := `INSERT INTO messages (name, content, created_at) VALUES (?, ?, ?)`
+	_, err := DB.Exec(query, name, content, time.Now())
+	return err
+}
