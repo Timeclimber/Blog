@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"time"
 
 	"blog/internal/models"
@@ -76,12 +75,81 @@ func DeleteArticle(id int) error {
 	return err
 }
 
+// 用户相关操作
+
+// CreateUser 创建用户
+func CreateUser(user *models.User) error {
+	query := `INSERT INTO users (username, password_hash, email, role, created_at) VALUES (?, ?, ?, ?, ?)`
+	result, err := DB.Exec(query, user.Username, user.PasswordHash, user.Email, user.Role, time.Now())
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	user.ID = int(id)
+	return nil
+}
+
+// GetUserByUsername 根据用户名获取用户
+func GetUserByUsername(username string) (*models.User, error) {
+	query := `SELECT id, username, password_hash, email, role, created_at FROM users WHERE username = ?`
+	row := DB.QueryRow(query, username)
+
+	user := &models.User{}
+	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// GetUserByID 根据ID获取用户
+func GetUserByID(id int) (*models.User, error) {
+	query := `SELECT id, username, password_hash, email, role, created_at FROM users WHERE id = ?`
+	row := DB.QueryRow(query, id)
+
+	user := &models.User{}
+	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// GetAllUsers 获取所有用户
+func GetAllUsers() ([]*models.User, error) {
+	query := `SELECT id, username, password_hash, email, role, created_at FROM users`
+	rows, err := DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		user := &models.User{}
+		err := rows.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // 评论相关操作
 
 // CreateComment 创建评论
 func CreateComment(comment *models.Comment) error {
-	query := `INSERT INTO comments (article_id, content, created_at) VALUES (?, ?, ?)`
-	result, err := DB.Exec(query, comment.ArticleID, comment.Content, time.Now())
+	query := `INSERT INTO comments (article_id, user_id, content, created_at) VALUES (?, ?, ?, ?)`
+	result, err := DB.Exec(query, comment.ArticleID, comment.UserID, comment.Content, time.Now())
 	if err != nil {
 		return err
 	}
@@ -97,7 +165,14 @@ func CreateComment(comment *models.Comment) error {
 
 // GetCommentsByArticleID 根据文章ID获取评论
 func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
-	query := `SELECT id, article_id, content, created_at FROM comments WHERE article_id = ? ORDER BY created_at DESC`
+	query := `
+	SELECT c.id, c.article_id, c.user_id, c.content, c.created_at, 
+	       u.id, u.username, u.email, u.role, u.created_at 
+	FROM comments c
+	LEFT JOIN users u ON c.user_id = u.id
+	WHERE c.article_id = ? 
+	ORDER BY c.created_at DESC
+	`
 	rows, err := DB.Query(query, articleID)
 	if err != nil {
 		return nil, err
@@ -107,10 +182,15 @@ func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
 	comments := []*models.Comment{}
 	for rows.Next() {
 		comment := &models.Comment{}
-		err := rows.Scan(&comment.ID, &comment.ArticleID, &comment.Content, &comment.CreatedAt)
+		user := &models.User{}
+		err := rows.Scan(
+			&comment.ID, &comment.ArticleID, &comment.UserID, &comment.Content, &comment.CreatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Role, &user.CreatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
+		comment.User = user
 		comments = append(comments, comment)
 	}
 

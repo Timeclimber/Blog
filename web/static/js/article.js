@@ -13,7 +13,7 @@ async function getArticleDetail() {
     }
 
     try {
-        const response = await fetch(`/api/articles/${id}`);
+        const response = await fetch(`/api/articles/detail/${id}`);
         const data = await response.json();
         renderArticleDetail(data);
         renderComments(data.comments);
@@ -55,7 +55,11 @@ function renderComments(comments) {
 
         const meta = document.createElement('div');
         meta.className = 'comment-meta';
-        meta.textContent = new Date(comment.created_at).toLocaleString();
+        let metaText = new Date(comment.created_at).toLocaleString();
+        if (comment.user && comment.user.username) {
+            metaText = `${metaText} - ${comment.user.username}`;
+        }
+        meta.textContent = metaText;
 
         commentItem.appendChild(content);
         commentItem.appendChild(meta);
@@ -71,11 +75,20 @@ async function submitComment() {
 
     if (!content) return;
 
+    // 检查登录状态
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('请先登录后再提交评论');
+        window.location.href = '/login';
+        return;
+    }
+
     try {
         const response = await fetch('/api/comments', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ article_id: parseInt(id), content })
         });

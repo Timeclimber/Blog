@@ -11,12 +11,24 @@ type Article struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// User 用户模型
+type User struct {
+	ID           int       `json:"id"`
+	Username     string    `json:"username"`
+	PasswordHash string    `json:"-"`
+	Email        string    `json:"email"`
+	Role         string    `json:"role"` // admin 或 user
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 // Comment 评论模型
 type Comment struct {
 	ID        int       `json:"id"`
 	ArticleID int       `json:"article_id"`
+	UserID    int       `json:"user_id"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
+	User      *User     `json:"user,omitempty"`
 }
 
 // Tag 标签模型

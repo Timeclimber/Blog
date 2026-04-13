@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 本地个人博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .auth-form {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .auth-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background: #555;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>本地个人博客</h1>
+        <nav>
+            <a href="/">首页</a>
+            <a href="/new">写文章</a>
+            <a href="/message">留言板</a>
+        </nav>
+    </header>
+    <main>
+        <div class="auth-form">
+            <h2>用户登录</h2>
+            <div id="error-message" class="error-message"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit">登录</button>
+                </div>
+            </form>
+            <p style="text-align: center; margin-top: 15px;">
+                还没有账号？<a href="/register">立即注册</a>
+            </p>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2026 本地个人博客</p>
+    </footer>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorMessage.textContent = data.error;
+                } else {
+                    // 存储token到localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // 跳转到首页
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                errorMessage.textContent = '登录失败，请稍后重试';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
