@@ -29,22 +29,27 @@ func main() {
 	// API路由
 	api := r.Group("/api")
 	{
+		// 用户相关路由
+		api.POST("/register", handlers.Register)
+		api.POST("/login", handlers.Login)
+		api.GET("/user", handlers.AuthMiddleware(), handlers.GetCurrentUser)
+
 		// 文章相关路由
-		api.POST("/articles", handlers.CreateArticle)
 		api.GET("/articles", handlers.GetAllArticles)
-		api.GET("/articles/:id", handlers.GetArticle)
-		api.PUT("/articles/:id", handlers.UpdateArticle)
-		api.DELETE("/articles/:id", handlers.DeleteArticle)
+		api.POST("/articles", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateArticle)
+		api.GET("/articles/detail/:id", handlers.GetArticle)
+		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.UpdateArticle)
+		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.DeleteArticle)
 
 		// 评论相关路由
-		api.POST("/comments", handlers.CreateComment)
+		api.POST("/comments", handlers.AuthMiddleware(), handlers.CreateComment)
 		api.GET("/articles/:article_id/comments", handlers.GetCommentsByArticleID)
 
 		// 标签相关路由
-		api.POST("/tags", handlers.CreateTag)
 		api.GET("/tags", handlers.GetAllTags)
-		api.POST("/articles/:article_id/tags/:tag_id", handlers.AddTagToArticle)
+		api.POST("/tags", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateTag)
 		api.GET("/articles/:article_id/tags", handlers.GetTagsByArticleID)
+		api.POST("/articles/:article_id/tags/:tag_id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.AddTagToArticle)
 	}
 
 	// 首页路由
@@ -60,6 +65,16 @@ func main() {
 	// 文章详情页面
 	r.GET("/article.html", func(c *gin.Context) {
 		c.HTML(200, "article.html", nil)
+	})
+
+	// 登录页面
+	r.GET("/login", func(c *gin.Context) {
+		c.HTML(200, "login.html", nil)
+	})
+
+	// 注册页面
+	r.GET("/register", func(c *gin.Context) {
+		c.HTML(200, "register.html", nil)
 	})
 
 	// 启动服务器

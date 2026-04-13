@@ -13,6 +13,9 @@
             <a href="/">首页</a>
             <a href="/new">写文章</a>
             <a href="/message">留言板</a>
+            <a href="/login" id="login-link">登录</a>
+            <a href="/register" id="register-link">注册</a>
+            <span id="user-info" style="display: none;"></span>
         </nav>
     </header>
     <main>
@@ -22,7 +25,7 @@
                 {{range .}}
                 <div class="article-item">
                     <h3><a href="/article?id={{.ID}}">{{.Title}}</a></h3>
-                    <p>{{.Content | truncate 100}}</p>
+                    <p>{{.Content}}</p>
                     <div class="article-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
                 {{else}}

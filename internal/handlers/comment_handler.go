@@ -18,9 +18,26 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
+	// 从上下文中获取用户信息
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	userMap := user.(gin.H)
+	comment.UserID = int(userMap["id"].(float64))
+
 	err := db.CreateComment(&comment)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建评论失败"})
+		return
+	}
+
+	// 获取完整的评论信息（包含用户信息）
+	updatedComment, err := db.GetCommentsByArticleID(comment.ArticleID)
+	if err == nil && len(updatedComment) > 0 {
+		c.JSON(http.StatusCreated, updatedComment[0])
 		return
 	}
 
