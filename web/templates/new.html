@@ -28,7 +28,7 @@
     <main>
         <section id="new-article">
             <h2>写文章</h2>
-            <form id="article-form" method="post" action="/new">
+            <form id="article-form">
                 <div class="form-group">
                     <label for="title">标题</label>
                     <input type="text" id="title" name="title" required>
@@ -41,6 +41,7 @@
                     <label for="tags">标签（用逗号分隔）</label>
                     <input type="text" id="tags" name="tags">
                 </div>
+                <div id="error-message" class="error-message"></div>
                 <button type="submit">发布文章</button>
             </form>
         </section>
@@ -80,6 +81,52 @@
                 window.location.href = '/';
             });
         }
+
+        // 文章提交
+        document.getElementById('article-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录后再发布文章！');
+                window.location.href = '/login';
+                return;
+            }
+
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const tagsInput = document.getElementById('tags').value.trim();
+            const errorDiv = document.getElementById('error-message');
+
+            if (!title || !content) {
+                errorDiv.textContent = '标题和内容不能为空';
+                return;
+            }
+
+            fetch('/api/articles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    title: title,
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                } else {
+                    alert('文章发布成功！');
+                    window.location.href = '/';
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = '发布失败：' + err.message;
+            });
+        });
 
         window.onload = checkLoginStatus;
     </script>

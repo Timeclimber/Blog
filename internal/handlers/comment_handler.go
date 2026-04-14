@@ -25,8 +25,25 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	userMap := user.(gin.H)
-	comment.UserID = int(userMap["id"].(float64))
+	userMap, ok := user.(gin.H)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	var userID int
+	switch v := userMap["id"].(type) {
+	case int:
+		userID = v
+	case float64:
+		userID = int(v)
+	case int64:
+		userID = int(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		return
+	}
+	comment.UserID = userID
 
 	err := db.CreateComment(&comment)
 	if err != nil {

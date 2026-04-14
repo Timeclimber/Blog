@@ -39,10 +39,11 @@
         <section id="comments">
             <h3>评论</h3>
             <div id="comment-form">
-                <form method="post" action="/article?id={{.Article.ID}}">
-                    <textarea name="comment" rows="3" placeholder="写下你的评论..."></textarea>
+                <form id="comment-submit-form">
+                    <textarea id="comment-content" rows="3" placeholder="写下你的评论..."></textarea>
                     <button type="submit">提交评论</button>
                 </form>
+                <div id="comment-error" class="error-message"></div>
             </div>
             <div id="comment-list">
                 {{range .Comments}}
@@ -62,6 +63,7 @@
 
     <script>
         const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+        const ARTICLE_ID = new URLSearchParams(window.location.search).get('id');
 
         function checkLoginStatus() {
             const token = localStorage.getItem('token');
@@ -91,6 +93,52 @@
                 window.location.href = '/';
             });
         }
+
+        // 评论提交
+        document.getElementById('comment-submit-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录后再评论！');
+                window.location.href = '/login';
+                return;
+            }
+
+            const content = document.getElementById('comment-content').value.trim();
+            const errorDiv = document.getElementById('comment-error');
+
+            if (!content) {
+                errorDiv.textContent = '评论内容不能为空';
+                return;
+            }
+
+            fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    article_id: parseInt(ARTICLE_ID),
+                    content: content
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                } else {
+                    errorDiv.textContent = '';
+                    document.getElementById('comment-content').value = '';
+                    alert('评论成功！');
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = '评论失败：' + err.message;
+            });
+        });
 
         window.onload = checkLoginStatus;
     </script>
