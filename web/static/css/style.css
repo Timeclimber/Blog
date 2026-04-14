@@ -85,6 +85,22 @@ nav a:hover::after {
     width: 100%;
 }
 
+/* 导航栏头像样式 */
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 5px;
+    border: 2px solid #007bff;
+}
+
+#user-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 /* 文章列表样式 */
 #article-list {
     margin-top: 2rem;
@@ -512,6 +528,32 @@ button:active {
     font-size: 0.875rem;
 }
 
+/* 表单消息样式（增强版） */
+.form-message {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.form-message.error {
+    display: block;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.form-message.success {
+    display: block;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .header-container {
@@ -675,8 +717,137 @@ button:active {
     .row {
         flex-direction: column;
     }
-    
+
     .col {
         margin-bottom: 1.5rem;
     }
+}
+
+/* 个人中心页面样式 */
+.profile-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profile-section {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #eaeaea;
+}
+
+.profile-section h2,
+.profile-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #eaeaea;
+}
+
+.avatar-section {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+    margin-bottom: 0.5rem;
+}
+
+.avatar-hint {
+    font-size: 0.875rem;
+    color: #999;
+    margin-top: 0.5rem;
+}
+
+.profile-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.profile-form select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background-color: #fff;
+}
+
+.profile-form select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* 用户资料卡片样式 */
+.user-profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #eaeaea;
+}
+
+.user-info-display {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 1.5rem;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+    min-width: 80px;
+}
+
+.info-value {
+    color: #212529;
+    font-size: 0.95rem;
+    text-align: right;
+    word-break: break-all;
+}
+
+/* 编辑区域样式 */
+.edit-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #eaeaea;
+}
+
+.edit-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
 }

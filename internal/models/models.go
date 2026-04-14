@@ -17,6 +17,8 @@ type User struct {
 	Username     string    `json:"username"`
 	PasswordHash string    `json:"-"`
 	Email        string    `json:"email"`
+	Gender       string    `json:"gender"` // male, female, other
+	AvatarURL    string    `json:"avatar_url"`
 	Role         string    `json:"role"` // admin 或 user
 	CreatedAt    time.Time `json:"created_at"`
 }

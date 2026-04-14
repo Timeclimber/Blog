@@ -8,12 +8,22 @@
 </head>
 <body>
     <header>
-        <h1>本地个人博客</h1>
-        <nav>
-            <a href="/">首页</a>
-            <a href="/new">写文章</a>
-            <a href="/message">留言板</a>
-        </nav>
+        <div class="header-container">
+            <h1>本地个人博客</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/new">写文章</a>
+                <a href="/message">留言板</a>
+                <a href="/login" id="login-link">登录</a>
+                <a href="/register" id="register-link">注册</a>
+                <div id="user-info" style="display: none;">
+                    <img id="nav-avatar" src="" alt="头像" class="nav-avatar">
+                    <span id="nav-username"></span>
+                    <a href="/profile" id="profile-link">个人中心</a>
+                    <a href="#" id="logout-link">退出</a>
+                </div>
+            </nav>
+        </div>
     </header>
     <main>
         <section id="new-article">
@@ -38,5 +48,40 @@
     <footer>
         <p>&copy; 2026 本地个人博客</p>
     </footer>
+
+    <script>
+        const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+
+        function checkLoginStatus() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('/api/user', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        document.getElementById('login-link').style.display = 'none';
+                        document.getElementById('register-link').style.display = 'none';
+                        document.getElementById('user-info').style.display = 'inline-flex';
+
+                        const avatarUrl = data.avatar_url || DEFAULT_AVATAR;
+                        document.getElementById('nav-avatar').src = avatarUrl;
+                        document.getElementById('nav-username').textContent = data.username;
+                    }
+                })
+                .catch(() => {});
+            }
+
+            document.getElementById('logout-link')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            });
+        }
+
+        window.onload = checkLoginStatus;
+    </script>
 </body>
 </html>

@@ -40,12 +40,25 @@ func createTables() error {
 		username TEXT NOT NULL UNIQUE,
 		password_hash TEXT NOT NULL,
 		email TEXT NOT NULL UNIQUE,
+		gender TEXT DEFAULT 'other',
+		avatar_url TEXT DEFAULT '',
 		role TEXT NOT NULL DEFAULT 'user',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`)
 	if err != nil {
 		return err
+	}
+
+	// 添加新字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE users ADD COLUMN gender TEXT DEFAULT 'other'`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
+	}
+
+	_, err = DB.Exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
 	}
 
 	// 创建文章表
