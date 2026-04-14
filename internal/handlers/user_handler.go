@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"blog/internal/db"
@@ -137,5 +139,191 @@ func GetCurrentUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	// 从gin.H中提取用户ID
+	userMap, ok := user.(gin.H)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	log.Printf("🔍 [DEBUG] 从JWT中提取的用户信息: %+v", userMap)
+
+	// 安全地提取用户ID（兼容int和float64两种类型）
+	var userID int
+	switch v := userMap["id"].(type) {
+	case int:
+		userID = v
+	case float64:
+		userID = int(v)
+	case int64:
+		userID = int(v)
+	default:
+		log.Printf("无法识别的用户ID类型: %T", userMap["id"])
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		return
+	}
+
+	log.Printf("🔍 [DEBUG] 提取到的用户ID: %d (类型: %T)", userID, userID)
+
+	// 从数据库查询完整用户信息
+	fullUser, err := db.GetUserByID(userID)
+	if err != nil {
+		log.Printf("❌ [ERROR] 查询用户信息失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询用户信息失败: " + err.Error()})
+		return
+	}
+
+	log.Printf("✅ [DEBUG] 从数据库查询到的完整用户信息:")
+	log.Printf("   - ID: %d", fullUser.ID)
+	log.Printf("   - Username: %s", fullUser.Username)
+	log.Printf("   - Email: %s", fullUser.Email)
+	log.Printf("   - Gender: '%s'", fullUser.Gender)
+	log.Printf("   - AvatarURL: '%s'", fullUser.AvatarURL)
+	log.Printf("   - Role: %s", fullUser.Role)
+	log.Printf("   - CreatedAt: %v", fullUser.CreatedAt)
+
+	// 返回完整用户信息（不包含密码）
+	responseData := gin.H{
+		"id":         fullUser.ID,
+		"username":   fullUser.Username,
+		"email":      fullUser.Email,
+		"gender":     fullUser.Gender,
+		"avatar_url": fullUser.AvatarURL,
+		"role":       fullUser.Role,
+		"created_at": fullUser.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	log.Printf("📤 [DEBUG] API返回给前端的数据: %+v", responseData)
+
+	c.JSON(http.StatusOK, responseData)
+}
+
+// UpdateUserRequest 更新用户信息请求
+type UpdateUserRequest struct {
+	Username  string `json:"username" binding:"required,min=3,max=50"`
+	Email     string `json:"email" binding:"required,email"`
+	Gender    string `json:"gender"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+// UpdateCurrentUser 更新当前用户信息
+func UpdateCurrentUser(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 从gin.H中提取用户ID并查询完整用户对象
+	userMap, ok := user.(gin.H)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 安全地提取用户ID（兼容int和float64两种类型）
+	var userID int
+	switch v := userMap["id"].(type) {
+	case int:
+		userID = v
+	case float64:
+		userID = int(v)
+	case int64:
+		userID = int(v)
+	default:
+		log.Printf("无法识别的用户ID类型: %T", userMap["id"])
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		return
+	}
+
+	currentUser, err := db.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在: " + err.Error()})
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数: " + err.Error()})
+		return
+	}
+
+	// 日志：打印接收到的数据
+	log.Printf("更新用户信息请求 - UserID: %d, Username: %s, Email: %s, Gender: %s", userID, req.Username, req.Email, req.Gender)
+
+	// 检查用户名是否被其他用户使用
+	existingUser, err := db.GetUserByUsername(req.Username)
+	if err == nil && existingUser.ID != currentUser.ID {
+		c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
+		return
+	}
+
+	// 更新用户信息
+	currentUser.Username = req.Username
+	currentUser.Email = req.Email
+	currentUser.Gender = req.Gender
+	currentUser.AvatarURL = req.AvatarURL
+
+	err = db.UpdateUser(currentUser)
+	if err != nil {
+		log.Printf("更新用户数据库失败: %v", err)
+		// 检查是否是唯一约束冲突（邮箱已被使用）
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") || strings.Contains(err.Error(), "unique") {
+			c.JSON(http.StatusConflict, gin.H{"error": "该邮箱已被其他用户使用"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户信息失败: " + err.Error()})
+		return
+	}
+
+	log.Printf("用户信息更新成功 - ID: %d, Username: %s", currentUser.ID, currentUser.Username)
+
+	// 返回更新后的用户信息（不包含密码）
+	c.JSON(http.StatusOK, gin.H{
+		"id":         currentUser.ID,
+		"username":   currentUser.Username,
+		"email":      currentUser.Email,
+		"gender":     currentUser.Gender,
+		"avatar_url": currentUser.AvatarURL,
+		"role":       currentUser.Role,
+	})
+}
+
+// GetMyComments 获取我的评论
+func GetMyComments(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 从gin.H中提取用户ID
+	userMap, ok := user.(gin.H)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 安全地提取用户ID（兼容int和float64两种类型）
+	var userID int
+	switch v := userMap["id"].(type) {
+	case int:
+		userID = v
+	case float64:
+		userID = int(v)
+	case int64:
+		userID = int(v)
+	default:
+		log.Printf("无法识别的用户ID类型: %T", userMap["id"])
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		return
+	}
+
+	comments, err := db.GetCommentsByUserID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, comments)
 }

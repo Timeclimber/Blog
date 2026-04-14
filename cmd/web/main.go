@@ -33,6 +33,8 @@ func main() {
 		api.POST("/register", handlers.Register)
 		api.POST("/login", handlers.Login)
 		api.GET("/user", handlers.AuthMiddleware(), handlers.GetCurrentUser)
+		api.PUT("/user", handlers.AuthMiddleware(), handlers.UpdateCurrentUser)
+		api.GET("/my-comments", handlers.AuthMiddleware(), handlers.GetMyComments)
 
 		// 文章相关路由
 		api.GET("/articles", handlers.GetAllArticles)
@@ -80,6 +82,16 @@ func main() {
 	// 留言板页面
 	r.GET("/message", handlers.GetMessages)
 	r.POST("/message", handlers.CreateMessage)
+
+	// 个人中心页面
+	r.GET("/profile", func(c *gin.Context) {
+		c.HTML(200, "profile.html", nil)
+	})
+
+	// 调试页面（开发用，上线前删除）
+	r.GET("/debug", func(c *gin.Context) {
+		c.HTML(200, "debug.html", nil)
+	})
 
 	// 启动服务器
 	log.Println("服务器启动在 http://localhost:8080")

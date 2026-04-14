@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 本地个人博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>本地个人博客</h1>
+            <nav>
+                <a href="/">首页</a>
+                <a href="/new">写文章</a>
+                <a href="/message">留言板</a>
+                <a href="/login" id="login-link">登录</a>
+                <a href="/register" id="register-link">注册</a>
+                <div id="user-info" style="display: none;">
+                    <img id="nav-avatar" src="" alt="头像" style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle; margin-right: 5px;">
+                    <span id="nav-username"></span>
+                    <a href="/profile" id="profile-link">个人中心</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="profile-container">
+            <!-- 用户信息卡片 -->
+            <section id="profile-info" class="profile-section">
+                <h2>个人信息</h2>
+                
+                <!-- 用户头像和信息展示 -->
+                <div class="user-profile-card">
+                    <div class="avatar-section">
+                        <img id="user-avatar" src="" alt="用户头像" class="avatar-large">
+                    </div>
+                    
+                    <!-- 用户详细信息展示 -->
+                    <div class="user-info-display">
+                        <div class="info-item">
+                            <span class="info-label">用户名</span>
+                            <span id="display-username" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">邮箱</span>
+                            <span id="display-email" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">性别</span>
+                            <span id="display-gender" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">角色</span>
+                            <span id="display-role" class="info-value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">注册时间</span>
+                            <span id="display-created" class="info-value">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 编辑表单 -->
+                <div class="edit-section">
+                    <h3>编辑资料</h3>
+                    <form id="profile-form" class="auth-form">
+                        <div id="message" class="form-message"></div>
+                        <div class="form-group">
+                            <label for="username">用户名</label>
+                            <input type="text" id="username" name="username" required minlength="3" maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">性别</label>
+                            <select id="gender" name="gender">
+                                <option value="other">其他</option>
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="avatar_url">头像URL</label>
+                            <input type="url" id="avatar_url" name="avatar_url" placeholder="留空则使用默认头像">
+                        </div>
+                        <button type="submit">保存修改</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 我的评论 -->
+            <section id="my-comments" class="profile-section">
+                <h3>我的评论</h3>
+                <div id="comments-list">
+                    <p>加载中...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2026 本地个人博客</p>
+    </footer>
+
+    <script>
+        // 默认头像URL（小灰人）
+        const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+
+        // 获取token
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        // 获取用户信息
+        function loadUserInfo() {
+            const token = getToken();
+            if (!token) {
+                console.log('❌ [前端DEBUG] 未找到token，跳转到登录页');
+                window.location.href = '/login';
+                return;
+            }
+
+            console.log('✅ [前端DEBUG] 开始获取用户信息...');
+            console.log('🔑 [前端DEBUG] Token:', token.substring(0, 50) + '...');
+
+            fetch('/api/user', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => {
+                console.log('📡 [前端DEBUG] API响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 [前端DEBUG] API返回的完整数据:', data);
+
+                if (data.error) {
+                    console.error('❌ [前端DEBUG] API返回错误:', data.error);
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                console.log('✅ [前端DEBUG] 开始更新页面显示...');
+
+                // 更新导航栏
+                document.getElementById('login-link').style.display = 'none';
+                document.getElementById('register-link').style.display = 'none';
+                document.getElementById('user-info').style.display = 'inline-block';
+
+                const avatarUrl = data.avatar_url || DEFAULT_AVATAR;
+                console.log('🖼️ [前端DEBUG] 头像URL:', avatarUrl);
+                document.getElementById('nav-avatar').src = avatarUrl;
+                document.getElementById('nav-username').textContent = data.username;
+
+                // 设置头像
+                document.getElementById('user-avatar').src = avatarUrl;
+
+                // 展示用户详细信息
+                console.log('👤 [前端DEBUG] 用户名:', data.username);
+                document.getElementById('display-username').textContent = data.username || '-';
+
+                console.log('📧 [前端DEBUG] 邮箱:', data.email);
+                document.getElementById('display-email').textContent = data.email || '-';
+
+                // 性别转换
+                let genderText = '其他';
+                if (data.gender === 'male') genderText = '男';
+                else if (data.gender === 'female') genderText = '女';
+                console.log('⚧️ [前端DEBUG] 性别原始值:', data.gender, '-> 显示为:', genderText);
+                document.getElementById('display-gender').textContent = genderText;
+
+                // 角色转换
+                let roleText = '普通用户';
+                if (data.role === 'admin') roleText = '管理员';
+                console.log('👑 [前端DEBUG] 角色原始值:', data.role, '-> 显示为:', roleText);
+                document.getElementById('display-role').textContent = roleText;
+
+                // 注册时间格式化
+                if (data.created_at) {
+                    const createdDate = new Date(data.created_at);
+                    console.log('📅 [前端DEBUG] 注册时间原始值:', data.created_at, '-> 格式化为:', createdDate.toLocaleString('zh-CN'));
+                    document.getElementById('display-created').textContent = createdDate.toLocaleString('zh-CN');
+                } else {
+                    console.log('⚠️ [前端DEBUG] 注册时间为空');
+                    document.getElementById('display-created').textContent = '-';
+                }
+
+                // 填充表单（用于编辑）
+                console.log('📝 [前端DEBUG] 填充编辑表单...');
+                document.getElementById('username').value = data.username || '';
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('gender').value = data.gender || 'other';
+                document.getElementById('avatar_url').value = data.avatar_url || '';
+
+                console.log('✅ [前端DEBUG] 用户信息加载完成！');
+            })
+            .catch(error => {
+                console.error('❌ [前端DEBUG] 获取用户信息失败:', error);
+            });
+        }
+
+        // 加载我的评论
+        function loadMyComments() {
+            const token = getToken();
+            if (!token) return;
+
+            fetch('/api/my-comments', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+            .then(response => response.json())
+            .then(comments => {
+                const commentsList = document.getElementById('comments-list');
+
+                if (comments.length === 0) {
+                    commentsList.innerHTML = '<p>暂无评论</p>';
+                    return;
+                }
+
+                let html = '';
+                comments.forEach(comment => {
+                    const date = new Date(comment.created_at).toLocaleString('zh-CN');
+                    html += `
+                        <div class="comment-item">
+                            <div class="comment-meta">
+                                <span>文章ID: ${comment.article_id}</span>
+                                <span>${date}</span>
+                            </div>
+                            <p>${comment.content}</p>
+                        </div>
+                    `;
+                });
+
+                commentsList.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('获取评论失败:', error);
+                document.getElementById('comments-list').innerHTML = '<p>获取评论失败</p>';
+            });
+        }
+
+        // 更新用户信息
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const gender = document.getElementById('gender').value;
+            const avatar_url = document.getElementById('avatar_url').value;
+            const messageDiv = document.getElementById('message');
+
+            console.log('正在提交表单数据:', { username, email, gender, avatar_url });
+
+            fetch('/api/user', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ username, email, gender, avatar_url })
+            })
+            .then(response => {
+                console.log('服务器响应状态:', response.status);
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('JSON解析失败:', text);
+                        throw new Error('服务器返回了非JSON响应: ' + text.substring(0, 100));
+                    }
+                });
+            })
+            .then(data => {
+                console.log('服务器返回数据:', data);
+
+                if (data.error) {
+                    messageDiv.textContent = data.error;
+                    messageDiv.className = 'form-message error';
+                } else {
+                    messageDiv.textContent = '✓ 更新成功！';
+                    messageDiv.className = 'form-message success';
+
+                    // 更新本地存储的用户信息
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    user.username = data.username;
+                    user.email = data.email;
+                    user.gender = data.gender;
+                    user.avatar_url = data.avatar_url;
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    // 更新导航栏和页面显示
+                    const newAvatarUrl = data.avatar_url || DEFAULT_AVATAR;
+                    document.getElementById('nav-avatar').src = newAvatarUrl;
+                    document.getElementById('nav-username').textContent = data.username;
+                    document.getElementById('user-avatar').src = newAvatarUrl;
+
+                    // ✅ 同步更新展示区域的信息
+                    document.getElementById('display-username').textContent = data.username || '-';
+                    document.getElementById('display-email').textContent = data.email || '-';
+                    
+                    // 性别转换
+                    let genderText = '其他';
+                    if (data.gender === 'male') genderText = '男';
+                    else if (data.gender === 'female') genderText = '女';
+                    document.getElementById('display-gender').textContent = genderText;
+                    
+                    console.log('个人信息已更新并同步显示到展示区域');
+
+                    setTimeout(() => {
+                        const msgDiv = document.getElementById('message');
+                        msgDiv.textContent = '';
+                        msgDiv.className = 'form-message';
+                    }, 3000);
+                }
+            })
+            .catch(error => {
+                console.error('请求失败详情:', error);
+                messageDiv.textContent = '更新失败: ' + error.message;
+                messageDiv.className = 'form-message error';
+            });
+            });
+        });
+
+        // 页面加载时初始化
+        window.onload = function() {
+            loadUserInfo();
+            loadMyComments();
+        };
+    </script>
+</body>
+</html>

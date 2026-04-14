@@ -96,11 +96,11 @@ func CreateUser(user *models.User) error {
 
 // GetUserByUsername 根据用户名获取用户
 func GetUserByUsername(username string) (*models.User, error) {
-	query := `SELECT id, username, password_hash, email, role, created_at FROM users WHERE username = ?`
+	query := `SELECT id, username, password_hash, email, gender, avatar_url, role, created_at FROM users WHERE username = ?`
 	row := DB.QueryRow(query, username)
 
 	user := &models.User{}
-	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -110,11 +110,11 @@ func GetUserByUsername(username string) (*models.User, error) {
 
 // GetUserByID 根据ID获取用户
 func GetUserByID(id int) (*models.User, error) {
-	query := `SELECT id, username, password_hash, email, role, created_at FROM users WHERE id = ?`
+	query := `SELECT id, username, password_hash, email, gender, avatar_url, role, created_at FROM users WHERE id = ?`
 	row := DB.QueryRow(query, id)
 
 	user := &models.User{}
-	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +122,16 @@ func GetUserByID(id int) (*models.User, error) {
 	return user, nil
 }
 
+// UpdateUser 更新用户信息
+func UpdateUser(user *models.User) error {
+	query := `UPDATE users SET username = ?, email = ?, gender = ?, avatar_url = ? WHERE id = ?`
+	_, err := DB.Exec(query, user.Username, user.Email, user.Gender, user.AvatarURL, user.ID)
+	return err
+}
+
 // GetAllUsers 获取所有用户
 func GetAllUsers() ([]*models.User, error) {
-	query := `SELECT id, username, password_hash, email, role, created_at FROM users`
+	query := `SELECT id, username, password_hash, email, gender, avatar_url, role, created_at FROM users`
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -134,7 +141,7 @@ func GetAllUsers() ([]*models.User, error) {
 	users := []*models.User{}
 	for rows.Next() {
 		user := &models.User{}
-		err := rows.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Role, &user.CreatedAt)
+		err := rows.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -142,6 +149,40 @@ func GetAllUsers() ([]*models.User, error) {
 	}
 
 	return users, nil
+}
+
+// GetCommentsByUserID 根据用户ID获取评论
+func GetCommentsByUserID(userID int) ([]*models.Comment, error) {
+	query := `
+	SELECT c.id, c.article_id, c.user_id, c.content, c.created_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM comments c
+	LEFT JOIN users u ON c.user_id = u.id
+	WHERE c.user_id = ?
+	ORDER BY c.created_at DESC
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	comments := []*models.Comment{}
+	for rows.Next() {
+		comment := &models.Comment{}
+		user := &models.User{}
+		err := rows.Scan(
+			&comment.ID, &comment.ArticleID, &comment.UserID, &comment.Content, &comment.CreatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		comment.User = user
+		comments = append(comments, comment)
+	}
+
+	return comments, nil
 }
 
 // 评论相关操作
