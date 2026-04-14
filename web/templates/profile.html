@@ -26,8 +26,17 @@
     </header>
     <main>
         <div class="profile-container">
+            <!-- 未登录提示 -->
+            <div id="login-required" class="login-required" style="display: none;">
+                <h2>🔒 需要登录</h2>
+                <p>请先登录后查看个人信息</p>
+                <a href="/login" class="btn-login">立即登录</a>
+                <span>或</span>
+                <a href="/register" class="btn-register">注册新账号</a>
+            </div>
+
             <!-- 用户信息卡片 -->
-            <section id="profile-info" class="profile-section">
+            <section id="profile-info" class="profile-section" style="display: none;">
                 <h2>个人信息</h2>
                 
                 <!-- 用户头像和信息展示 -->
@@ -117,8 +126,11 @@
         function loadUserInfo() {
             const token = getToken();
             if (!token) {
-                console.log('❌ [前端DEBUG] 未找到token，跳转到登录页');
-                window.location.href = '/login';
+                console.log('❌ [前端DEBUG] 未找到token，显示登录提示');
+                document.getElementById('login-required').style.display = 'block';
+                document.getElementById('profile-info').style.display = 'none';
+                document.querySelector('.edit-section')?.parentNode?.remove();
+                document.querySelector('#my-comments')?.parentNode?.remove();
                 return;
             }
 
@@ -132,6 +144,9 @@
             })
             .then(response => {
                 console.log('📡 [前端DEBUG] API响应状态:', response.status);
+                if (response.status === 401) {
+                    throw new Error('Token无效或已过期');
+                }
                 return response.json();
             })
             .then(data => {
@@ -140,11 +155,17 @@
                 if (data.error) {
                     console.error('❌ [前端DEBUG] API返回错误:', data.error);
                     localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    localStorage.removeItem('user');
+                    document.getElementById('login-required').style.display = 'block';
+                    document.getElementById('profile-info').style.display = 'none';
                     return;
                 }
 
                 console.log('✅ [前端DEBUG] 开始更新页面显示...');
+
+                // 显示个人信息区域，隐藏登录提示
+                document.getElementById('login-required').style.display = 'none';
+                document.getElementById('profile-info').style.display = 'block';
 
                 // 更新导航栏
                 document.getElementById('login-link').style.display = 'none';
