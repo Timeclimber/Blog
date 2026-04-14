@@ -145,3 +145,44 @@
 - `internal/db/operations.go` - 新增GetUserByID等用户查询函数
 - `web/static/css/style.css` - 添加个人中心相关样式
 - `cmd/web/main.go` - 添加profile和debug路由
+
+## 2.2.0 (2026-04-15)
+
+### 问题修复（严重Bug修复）
+- **[严重] comment_handler.go 类型转换不安全**
+  - 修复直接使用 `int(userMap["id"].(float64))` 导致的潜在panic问题
+  - 使用 type switch 安全处理 int、float64、int64 多种类型
+  - 增加类型检查和错误返回机制
+
+- **[严重] 首页文章列表不显示**
+  - 修复首页路由返回空模板导致永远显示"暂无文章"
+  - 现在从数据库查询文章数据并正确传递给模板渲染
+
+- **[严重] 文章详情页无法显示内容**
+  - 修复文章详情页返回空模板的问题
+  - 实现完整的文章ID解析、数据库查询逻辑
+  - 正确传递文章、评论、标签数据给模板
+
+- **[严重] 评论提交功能不工作**
+  - 将评论表单从传统POST改为AJAX提交到 `/api/comments`
+  - 添加Token验证和登录状态检查
+  - 增加错误提示和成功反馈
+
+- **[中等] 写文章功能不工作**
+  - 将写文章表单从传统POST改为AJAX提交到 `/api/articles`
+  - 添加管理员权限验证
+  - 增加表单验证和错误提示
+
+### 代码清理
+- 删除冗余的旧版代码文件：
+  - `main.go` (旧版net/http实现)
+  - `simple_blog.go` (JSON存储版本)
+  - `blog.exe`, `main.exe` (编译产物)
+  - `blog_data.json` (旧的JSON数据文件)
+- 统一版本记录文档，合并RELEASE_NOTES.md到CHANGELOG.md
+
+### 修改文件
+- `internal/handlers/comment_handler.go` - 安全的类型转换机制
+- `cmd/web/main.go` - 首页和文章详情页数据传递逻辑
+- `web/templates/article.html` - 评论AJAX提交功能
+- `web/templates/new.html` - 写文章AJAX提交功能

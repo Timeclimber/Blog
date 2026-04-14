@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"strconv"
 
 	"blog/internal/db"
 	"blog/internal/handlers"
+	"blog/internal/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,7 +58,11 @@ func main() {
 
 	// 首页路由
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
+		articles, err := db.GetAllArticles()
+		if err != nil {
+			articles = []*models.Article{}
+		}
+		c.HTML(200, "index.html", articles)
 	})
 
 	// 写文章页面
@@ -66,7 +72,27 @@ func main() {
 
 	// 文章详情页面
 	r.GET("/article.html", func(c *gin.Context) {
-		c.HTML(200, "article.html", nil)
+		idStr := c.Query("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.HTML(400, "article.html", gin.H{"error": "无效的文章ID"})
+			return
+		}
+
+		article, err := db.GetArticleByID(id)
+		if err != nil {
+			c.HTML(404, "article.html", gin.H{"error": "文章不存在"})
+			return
+		}
+
+		comments, _ := db.GetCommentsByArticleID(id)
+		tags, _ := db.GetTagsByArticleID(id)
+
+		c.HTML(200, "article.html", gin.H{
+			"Article":  article,
+			"Comments": comments,
+			"Tags":     tags,
+		})
 	})
 
 	// 登录页面
