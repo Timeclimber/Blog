@@ -40,10 +40,10 @@ func main() {
 
 		// 文章相关路由
 		api.GET("/articles", handlers.GetAllArticles)
-		api.POST("/articles", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateArticle)
+		api.POST("/articles", handlers.AuthMiddleware(), handlers.CreateArticle)
 		api.GET("/articles/detail/:id", handlers.GetArticle)
-		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.UpdateArticle)
-		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.DeleteArticle)
+		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.UpdateArticle)
+		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.DeleteArticle)
 
 		// 评论相关路由
 		api.POST("/comments", handlers.AuthMiddleware(), handlers.CreateComment)

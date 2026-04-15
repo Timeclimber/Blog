@@ -1,5 +1,17 @@
 # 版本更新记录
 
+## 2.3.3 (2026-04-16)
+
+### 功能修复
+- **修复发表文章无权限问题**
+  - 移除 `POST /api/articles` 路由中的 `AdminMiddleware()` 限制
+  - 移除 `PUT /api/articles/detail/:id` 路由中的 `AdminMiddleware()` 限制
+  - 移除 `DELETE /api/articles/detail/:id` 路由中的 `AdminMiddleware()` 限制
+  - 现在所有登录用户都可以创建、编辑和删除文章
+
+### 修改文件
+- `cmd/web/main.go` - 移除文章操作的管理员权限限制
+
 ## 2.3.2 (2026-04-16)
 
 ### 仓库清理
