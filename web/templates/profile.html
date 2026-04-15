@@ -101,7 +101,7 @@
             </section>
 
             <!-- 我的评论 -->
-            <section id="my-comments" class="profile-section">
+            <section id="my-comments" class="profile-section" style="display: none;">
                 <h3>我的评论</h3>
                 <div id="comments-list">
                     <p>加载中...</p>
@@ -129,8 +129,7 @@
                 console.log('❌ [前端DEBUG] 未找到token，显示登录提示');
                 document.getElementById('login-required').style.display = 'block';
                 document.getElementById('profile-info').style.display = 'none';
-                document.querySelector('.edit-section')?.parentNode?.remove();
-                document.querySelector('#my-comments')?.parentNode?.remove();
+                document.getElementById('my-comments').style.display = 'none';
                 return;
             }
 
@@ -158,14 +157,16 @@
                     localStorage.removeItem('user');
                     document.getElementById('login-required').style.display = 'block';
                     document.getElementById('profile-info').style.display = 'none';
+                    document.getElementById('my-comments').style.display = 'none';
                     return;
                 }
 
                 console.log('✅ [前端DEBUG] 开始更新页面显示...');
 
-                // 显示个人信息区域，隐藏登录提示
+                // 显示个人信息区域和我的评论，隐藏登录提示
                 document.getElementById('login-required').style.display = 'none';
                 document.getElementById('profile-info').style.display = 'block';
+                document.getElementById('my-comments').style.display = 'block';
 
                 // 更新导航栏
                 document.getElementById('login-link').style.display = 'none';
@@ -221,6 +222,9 @@
             })
             .catch(error => {
                 console.error('❌ [前端DEBUG] 获取用户信息失败:', error);
+                document.getElementById('login-required').style.display = 'block';
+                document.getElementById('profile-info').style.display = 'none';
+                document.getElementById('my-comments').style.display = 'none';
             });
         }
 
