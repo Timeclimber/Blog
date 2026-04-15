@@ -372,6 +372,27 @@ button:active {
     background-color: #f8f9fa;
 }
 
+.comment-item .comment-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.comment-item .comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eaeaea;
+}
+
+.comment-item .comment-username {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+}
+
 .comment-item .comment-meta {
     font-size: 0.875rem;
     color: #999;

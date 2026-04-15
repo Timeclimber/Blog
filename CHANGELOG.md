@@ -1,5 +1,18 @@
 # 版本更新记录
 
+## 2.3.5 (2026-04-16)
+
+### 功能修复
+- **修复评论不显示用户信息问题**
+  - 修复 `GetCommentsByArticleID` 数据库查询缺少 `gender` 和 `avatar_url` 字段
+  - 更新前端 `article.html` 显示评论用户头像和用户名
+  - 添加评论用户信息的 CSS 样式，提升视觉效果
+
+### 修改文件
+- `internal/db/operations.go` - 修复评论查询缺少的字段
+- `web/templates/article.html` - 添加评论用户信息显示
+- `web/static/css/style.css` - 添加评论用户信息样式
+
 ## 2.3.4 (2026-04-16)
 
 ### 功能修复

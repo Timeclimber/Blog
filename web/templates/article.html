@@ -48,6 +48,15 @@
             <div id="comment-list">
                 {{range .Comments}}
                 <div class="comment-item">
+                    <div class="comment-user">
+                        {{if .User}}
+                        <img src="{{.User.AvatarURL}}" alt="头像" class="comment-avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=default'">
+                        <span class="comment-username">{{.User.Username}}</span>
+                        {{else}}
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="头像" class="comment-avatar">
+                        <span class="comment-username">匿名用户</span>
+                        {{end}}
+                    </div>
                     <p>{{.Content}}</p>
                     <div class="comment-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>

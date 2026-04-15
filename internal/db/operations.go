@@ -208,7 +208,7 @@ func CreateComment(comment *models.Comment) error {
 func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
 	query := `
 	SELECT c.id, c.article_id, c.user_id, c.content, c.created_at, 
-	       u.id, u.username, u.email, u.role, u.created_at 
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at 
 	FROM comments c
 	LEFT JOIN users u ON c.user_id = u.id
 	WHERE c.article_id = ? 
@@ -226,7 +226,7 @@ func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
 		user := &models.User{}
 		err := rows.Scan(
 			&comment.ID, &comment.ArticleID, &comment.UserID, &comment.Content, &comment.CreatedAt,
-			&user.ID, &user.Username, &user.Email, &user.Role, &user.CreatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
 		)
 		if err != nil {
 			return nil, err
