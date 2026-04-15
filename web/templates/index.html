@@ -31,7 +31,7 @@
             <div id="article-list">
                 {{range .}}
                 <div class="article-item">
-                    <h3><a href="/article?id={{.ID}}">{{.Title}}</a></h3>
+                    <h3><a href="/article.html?id={{.ID}}">{{.Title}}</a></h3>
                     <p>{{.Content}}</p>
                     <div class="article-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
