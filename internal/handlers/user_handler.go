@@ -327,3 +327,76 @@ func GetMyComments(c *gin.Context) {
 
 	c.JSON(http.StatusOK, comments)
 }
+
+// UpdatePasswordRequest 修改密码请求
+type UpdatePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=6"`
+}
+
+// UpdatePassword 修改密码
+func UpdatePassword(c *gin.Context) {
+	var req UpdatePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		return
+	}
+
+	// 从上下文中获取用户信息
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	userMap, ok := user.(gin.H)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 安全地提取用户ID
+	var userID int
+	switch v := userMap["id"].(type) {
+	case int:
+		userID = v
+	case float64:
+		userID = int(v)
+	case int64:
+		userID = int(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		return
+	}
+
+	// 从数据库查询用户
+	currentUser, err := db.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	// 验证当前密码
+	err = bcrypt.CompareHashAndPassword([]byte(currentUser.PasswordHash), []byte(req.CurrentPassword))
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "当前密码不正确"})
+		return
+	}
+
+	// 哈希新密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "密码加密失败"})
+		return
+	}
+
+	// 更新密码
+	currentUser.PasswordHash = string(hashedPassword)
+	err = db.UpdateUserPassword(currentUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新密码失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
+}

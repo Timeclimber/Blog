@@ -36,6 +36,7 @@ func main() {
 		api.POST("/login", handlers.Login)
 		api.GET("/user", handlers.AuthMiddleware(), handlers.GetCurrentUser)
 		api.PUT("/user", handlers.AuthMiddleware(), handlers.UpdateCurrentUser)
+		api.PUT("/user/password", handlers.AuthMiddleware(), handlers.UpdatePassword)
 		api.GET("/my-comments", handlers.AuthMiddleware(), handlers.GetMyComments)
 
 		// 文章相关路由

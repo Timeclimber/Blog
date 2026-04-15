@@ -150,6 +150,13 @@ func UpdateUser(user *models.User) error {
 	return err
 }
 
+// UpdateUserPassword 更新用户密码
+func UpdateUserPassword(user *models.User) error {
+	query := `UPDATE users SET password_hash = ? WHERE id = ?`
+	_, err := DB.Exec(query, user.PasswordHash, user.ID)
+	return err
+}
+
 // GetAllUsers 获取所有用户
 func GetAllUsers() ([]*models.User, error) {
 	query := `SELECT id, username, password_hash, email, gender, avatar_url, role, created_at FROM users`

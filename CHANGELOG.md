@@ -1,5 +1,24 @@
 # 版本更新记录
 
+## 2.3.8 (2026-04-16)
+
+### 功能增强
+- **添加修改密码功能**
+  - 个人中心页面新增修改密码表单
+  - 验证当前密码后才能修改新密码
+  - 新密码需要确认输入，防止误输
+  - 密码使用 bcrypt 安全哈希存储
+  - 新增 PUT /api/user/password 路由
+  - 新增 UpdateUserPassword 数据库操作函数
+  - 新增 UpdatePassword 处理器
+  - 前端显示成功/失败提示，3秒后自动消失
+
+### 修改文件
+- `web/templates/profile.html` - 添加修改密码表单和前端逻辑
+- `internal/handlers/user_handler.go` - 添加修改密码处理器
+- `internal/db/operations.go` - 添加更新密码的数据库操作
+- `cmd/web/main.go` - 添加修改密码路由
+
 ## 2.3.7 (2026-04-16)
 
 ### 功能增强
