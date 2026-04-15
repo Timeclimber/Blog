@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Article.Title}} - 本地个人博客</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.7">
 </head>
 <body>
     <header>
@@ -27,7 +27,10 @@
     </header>
     <main>
         <section id="article-detail">
-            <h2>{{.Article.Title}}</h2>
+            <div class="article-header">
+                <h2>{{.Article.Title}}</h2>
+                <button class="article-delete-btn" data-article-id="{{.Article.ID}}" data-user-id="{{if .Article.User}}{{.Article.User.ID}}{{else}}0{{end}}" style="display: none;">删除文章</button>
+            </div>
             <div id="article-meta">{{.Article.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
             <div id="article-tags">
                 {{range .Tags}}
@@ -110,9 +113,17 @@
 
         function showDeleteButtons() {
             if (!currentUser) return;
+            // 显示评论删除按钮
             document.querySelectorAll('.comment-delete-btn').forEach(btn => {
                 const commentUserId = parseInt(btn.dataset.userId);
                 if (currentUser.id === commentUserId || currentUser.role === 'admin') {
+                    btn.style.display = 'inline-block';
+                }
+            });
+            // 显示文章删除按钮
+            document.querySelectorAll('.article-delete-btn').forEach(btn => {
+                const articleUserId = parseInt(btn.dataset.userId);
+                if (currentUser.id === articleUserId || currentUser.role === 'admin') {
                     btn.style.display = 'inline-block';
                 }
             });
@@ -193,6 +204,43 @@
                     } else {
                     alert('评论删除成功！');
                     window.location.reload();
+                    }
+                })
+                .catch(err => {
+                    alert('删除失败：' + err.message);
+                });
+            }
+        });
+
+        // 删除文章
+        document.getElementById('article-detail')?.addEventListener('click', function(e) {
+            if (e.target.classList.contains('article-delete-btn')) {
+                e.preventDefault();
+                const articleId = e.target.dataset.articleId;
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    alert('请先登录！');
+                    return;
+                }
+
+                if (!confirm('确定要删除这篇文章吗？')) {
+                    return;
+                }
+
+                fetch(`/api/articles/detail/${articleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                    alert(data.error);
+                    } else {
+                    alert('文章删除成功！');
+                    window.location.href = '/';
                     }
                 })
                 .catch(err => {

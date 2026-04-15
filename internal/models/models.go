@@ -7,8 +7,10 @@ type Article struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
+	UserID    int       `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	User      *User     `json:"user,omitempty"`
 }
 
 // User 用户模型

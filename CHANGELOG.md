@@ -1,5 +1,27 @@
 # 版本更新记录
 
+## 2.3.7 (2026-04-16)
+
+### 功能增强
+- **添加文章删除功能**
+  - 新增 `Article` 模型添加 `UserID` 和 `User` 字段
+  - 数据库表 `articles` 添加 `user_id` 字段，关联用户信息
+  - 更新数据库查询函数，添加 LEFT JOIN 获取文章作者信息
+  - 完善文章删除权限验证：仅文章作者和管理员可删除
+  - 首页文章列表显示作者头像和用户名
+  - 首页添加文章删除按钮（仅作者和管理员可见）
+  - 文章详情页添加文章删除按钮（仅作者和管理员可见）
+  - 删除按钮点击确认，防止误操作
+
+### 修改文件
+- `internal/models/models.go` - 文章模型添加UserID和User字段
+- `internal/db/db.go` - 数据库表添加user_id字段
+- `internal/db/operations.go` - 更新文章相关数据库操作
+- `internal/handlers/article_handler.go` - 完善文章创建、更新、删除权限验证
+- `web/templates/index.html` - 首页添加作者信息和删除按钮
+- `web/templates/article.html` - 文章详情页添加删除按钮
+- `web/static/css/style.css` - 添加文章作者信息和删除按钮样式
+
 ## 2.3.6 (2026-04-16)
 
 ### 功能增强

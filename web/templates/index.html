@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>本地个人博客</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.7">
 </head>
 <body>
     <header>
@@ -30,8 +30,17 @@
             <h2>文章列表</h2>
             <div id="article-list">
                 {{range .}}
-                <div class="article-item">
-                    <h3><a href="/article.html?id={{.ID}}">{{.Title}}</a></h3>
+                <div class="article-item" data-article-id="{{.ID}}">
+                    <div class="article-header">
+                        <h3><a href="/article.html?id={{.ID}}">{{.Title}}</a></h3>
+                        <button class="article-delete-btn" data-article-id="{{.ID}}" data-user-id="{{if .User}}{{.User.ID}}{{else}}0{{end}}" style="display: none;">删除</button>
+                    </div>
+                    {{if .User}}
+                    <div class="article-author">
+                        <img src="{{.User.AvatarURL}}" alt="头像" class="article-avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=default'">
+                        <span>{{.User.Username}}</span>
+                    </div>
+                    {{end}}
                     <p>{{.Content}}</p>
                     <div class="article-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
@@ -47,6 +56,7 @@
 
     <script>
         const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+        let currentUser = null;
 
         function checkLoginStatus() {
             const token = localStorage.getItem('token');
@@ -57,6 +67,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (!data.error) {
+                        currentUser = data;
                         document.getElementById('login-link').style.display = 'none';
                         document.getElementById('register-link').style.display = 'none';
                         document.getElementById('user-info').style.display = 'inline-flex';
@@ -64,6 +75,8 @@
                         const avatarUrl = data.avatar_url || DEFAULT_AVATAR;
                         document.getElementById('nav-avatar').src = avatarUrl;
                         document.getElementById('nav-username').textContent = data.username;
+
+                        showDeleteButtons();
                     }
                 })
                 .catch(() => {});
@@ -77,6 +90,53 @@
                 window.location.href = '/';
             });
         }
+
+        function showDeleteButtons() {
+            if (!currentUser) return;
+            document.querySelectorAll('.article-delete-btn').forEach(btn => {
+                const articleUserId = parseInt(btn.dataset.userId);
+                if (currentUser.id === articleUserId || currentUser.role === 'admin') {
+                    btn.style.display = 'inline-block';
+                }
+            });
+        }
+
+        // 删除文章
+        document.getElementById('article-list')?.addEventListener('click', function(e) {
+            if (e.target.classList.contains('article-delete-btn')) {
+                e.preventDefault();
+                const articleId = e.target.dataset.articleId;
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    alert('请先登录！');
+                    return;
+                }
+
+                if (!confirm('确定要删除这篇文章吗？')) {
+                    return;
+                }
+
+                fetch(`/api/articles/detail/${articleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                    alert(data.error);
+                    } else {
+                    alert('文章删除成功！');
+                    window.location.reload();
+                    }
+                })
+                .catch(err => {
+                    alert('删除失败：' + err.message);
+                });
+            }
+        });
 
         window.onload = checkLoginStatus;
     </script>

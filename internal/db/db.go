@@ -67,12 +67,19 @@ func createTables() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
+		user_id INTEGER NOT NULL DEFAULT 1,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`)
 	if err != nil {
 		return err
+	}
+
+	// 添加 user_id 字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE articles ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
 	}
 
 	// 创建评论表

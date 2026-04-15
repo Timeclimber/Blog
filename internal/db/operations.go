@@ -10,8 +10,8 @@ import (
 
 // CreateArticle 创建文章
 func CreateArticle(article *models.Article) error {
-	query := `INSERT INTO articles (title, content, created_at, updated_at) VALUES (?, ?, ?, ?)`
-	result, err := DB.Exec(query, article.Title, article.Content, time.Now(), time.Now())
+	query := `INSERT INTO articles (title, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
+	result, err := DB.Exec(query, article.Title, article.Content, article.UserID, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -27,21 +27,37 @@ func CreateArticle(article *models.Article) error {
 
 // GetArticleByID 根据ID获取文章
 func GetArticleByID(id int) (*models.Article, error) {
-	query := `SELECT id, title, content, created_at, updated_at FROM articles WHERE id = ?`
+	query := `
+	SELECT a.id, a.title, a.content, a.user_id, a.created_at, a.updated_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM articles a
+	LEFT JOIN users u ON a.user_id = u.id
+	WHERE a.id = ?
+	`
 	row := DB.QueryRow(query, id)
 
 	article := &models.Article{}
-	err := row.Scan(&article.ID, &article.Title, &article.Content, &article.CreatedAt, &article.UpdatedAt)
+	user := &models.User{}
+	err := row.Scan(
+		&article.ID, &article.Title, &article.Content, &article.UserID, &article.CreatedAt, &article.UpdatedAt,
+		&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+	)
 	if err != nil {
 		return nil, err
 	}
-
+	article.User = user
 	return article, nil
 }
 
 // GetAllArticles 获取所有文章
 func GetAllArticles() ([]*models.Article, error) {
-	query := `SELECT id, title, content, created_at, updated_at FROM articles ORDER BY created_at DESC`
+	query := `
+	SELECT a.id, a.title, a.content, a.user_id, a.created_at, a.updated_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM articles a
+	LEFT JOIN users u ON a.user_id = u.id
+	ORDER BY a.created_at DESC
+	`
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -51,10 +67,15 @@ func GetAllArticles() ([]*models.Article, error) {
 	articles := []*models.Article{}
 	for rows.Next() {
 		article := &models.Article{}
-		err := rows.Scan(&article.ID, &article.Title, &article.Content, &article.CreatedAt, &article.UpdatedAt)
+		user := &models.User{}
+		err := rows.Scan(
+			&article.ID, &article.Title, &article.Content, &article.UserID, &article.CreatedAt, &article.UpdatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
+		article.User = user
 		articles = append(articles, article)
 	}
 
