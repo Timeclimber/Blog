@@ -1,5 +1,23 @@
 # 版本更新记录
 
+## 2.3.6 (2026-04-16)
+
+### 功能增强
+- **添加评论删除功能**
+  - 新增 `GetCommentByID` 和 `DeleteComment` 数据库操作函数
+  - 新增 `DeleteComment` 处理器，带权限验证
+  - 新增 `DELETE /api/comments/:id` 路由
+  - 前端显示删除按钮（仅评论作者和管理员可见）
+  - 删除按钮点击确认，防止误操作
+  - 删除成功后自动刷新页面
+
+### 修改文件
+- `internal/db/operations.go` - 添加评论删除相关数据库操作
+- `internal/handlers/comment_handler.go` - 添加删除评论处理器
+- `cmd/web/main.go` - 添加删除评论路由
+- `web/templates/article.html` - 添加删除按钮和前端逻辑
+- `web/static/css/style.css` - 添加删除按钮样式
+
 ## 2.3.5 (2026-04-16)
 
 ### 功能修复

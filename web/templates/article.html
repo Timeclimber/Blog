@@ -47,7 +47,7 @@
             </div>
             <div id="comment-list">
                 {{range .Comments}}
-                <div class="comment-item">
+                <div class="comment-item" data-comment-id="{{.ID}}">
                     <div class="comment-user">
                         {{if .User}}
                         <img src="{{.User.AvatarURL}}" alt="头像" class="comment-avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=default'">
@@ -56,6 +56,7 @@
                         <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="头像" class="comment-avatar">
                         <span class="comment-username">匿名用户</span>
                         {{end}}
+                        <button class="comment-delete-btn" data-comment-id="{{.ID}}" data-user-id="{{if .User}}{{.User.ID}}{{else}}0{{end}}" style="display: none;">删除</button>
                     </div>
                     <p>{{.Content}}</p>
                     <div class="comment-meta">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</div>
@@ -73,6 +74,7 @@
     <script>
         const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         const ARTICLE_ID = new URLSearchParams(window.location.search).get('id');
+        let currentUser = null;
 
         function checkLoginStatus() {
             const token = localStorage.getItem('token');
@@ -83,6 +85,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (!data.error) {
+                        currentUser = data;
                         document.getElementById('login-link').style.display = 'none';
                         document.getElementById('register-link').style.display = 'none';
                         document.getElementById('user-info').style.display = 'inline-flex';
@@ -90,6 +93,8 @@
                         const avatarUrl = data.avatar_url || DEFAULT_AVATAR;
                         document.getElementById('nav-avatar').src = avatarUrl;
                         document.getElementById('nav-username').textContent = data.username;
+
+                        showDeleteButtons();
                     }
                 })
                 .catch(() => {});
@@ -100,6 +105,16 @@
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = '/';
+            });
+        }
+
+        function showDeleteButtons() {
+            if (!currentUser) return;
+            document.querySelectorAll('.comment-delete-btn').forEach(btn => {
+                const commentUserId = parseInt(btn.dataset.userId);
+                if (currentUser.id === commentUserId || currentUser.role === 'admin') {
+                    btn.style.display = 'inline-block';
+                }
             });
         }
 
@@ -147,6 +162,43 @@
             .catch(err => {
                 errorDiv.textContent = '评论失败：' + err.message;
             });
+        });
+
+        // 删除评论
+        document.getElementById('comment-list')?.addEventListener('click', function(e) {
+            if (e.target.classList.contains('comment-delete-btn')) {
+                e.preventDefault();
+                const commentId = e.target.dataset.commentId;
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    alert('请先登录！');
+                    return;
+                }
+
+                if (!confirm('确定要删除这条评论吗？')) {
+                    return;
+                }
+
+                fetch(`/api/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                    alert(data.error);
+                    } else {
+                    alert('评论删除成功！');
+                    window.location.reload();
+                    }
+                })
+                .catch(err => {
+                    alert('删除失败：' + err.message);
+                });
+            }
         });
 
         window.onload = checkLoginStatus;

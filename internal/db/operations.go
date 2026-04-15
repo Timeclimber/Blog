@@ -238,6 +238,37 @@ func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
 	return comments, nil
 }
 
+// GetCommentByID 根据ID获取评论
+func GetCommentByID(id int) (*models.Comment, error) {
+	query := `
+	SELECT c.id, c.article_id, c.user_id, c.content, c.created_at, 
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at 
+	FROM comments c
+	LEFT JOIN users u ON c.user_id = u.id
+	WHERE c.id = ?
+	`
+	row := DB.QueryRow(query, id)
+
+	comment := &models.Comment{}
+	user := &models.User{}
+	err := row.Scan(
+		&comment.ID, &comment.ArticleID, &comment.UserID, &comment.Content, &comment.CreatedAt,
+		&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	comment.User = user
+	return comment, nil
+}
+
+// DeleteComment 删除评论
+func DeleteComment(id int) error {
+	query := `DELETE FROM comments WHERE id = ?`
+	_, err := DB.Exec(query, id)
+	return err
+}
+
 // 标签相关操作
 
 // CreateTag 创建标签

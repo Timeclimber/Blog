@@ -48,6 +48,7 @@ func main() {
 		// 评论相关路由
 		api.POST("/comments", handlers.AuthMiddleware(), handlers.CreateComment)
 		api.GET("/articles/:article_id/comments", handlers.GetCommentsByArticleID)
+		api.DELETE("/comments/:id", handlers.AuthMiddleware(), handlers.DeleteComment)
 
 		// 标签相关路由
 		api.GET("/tags", handlers.GetAllTags)

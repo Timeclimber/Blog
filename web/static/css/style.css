@@ -393,6 +393,22 @@ button:active {
     font-size: 1rem;
 }
 
+.comment-item .comment-delete-btn {
+    margin-left: auto;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.comment-item .comment-delete-btn:hover {
+    background-color: #c82333;
+}
+
 .comment-item .comment-meta {
     font-size: 0.875rem;
     color: #999;
