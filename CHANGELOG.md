@@ -263,6 +263,25 @@
 ### 修改文件
 - `web/templates/profile.html` - 调整区域默认显示状态
 
+## 2.3.1 (2026-04-16)
+
+### UI 改进
+- **页脚固定底部居中显示**
+  - 将 footer 设置为 `position: fixed; bottom: 0`，固定在浏览器视口底部
+  - 为 body 添加 `padding-bottom: 6rem`，避免内容被 footer 遮挡
+  - 添加 `footer p` 样式确保文字内容居中
+  - 所有页面 CSS 引用添加版本号 `?v=2.3.1`，强制浏览器刷新缓存
+
+### 修改文件
+- `web/static/css/style.css` - 页脚固定底部居中样式
+- `web/templates/index.html` - CSS 版本号更新
+- `web/templates/login.html` - CSS 版本号更新
+- `web/templates/register.html` - CSS 版本号更新
+- `web/templates/message.html` - CSS 版本号更新
+- `web/templates/article.html` - CSS 版本号更新
+- `web/templates/new.html` - CSS 版本号更新
+- `web/templates/profile.html` - CSS 版本号更新
+
 ## 2.3.0 (2026-04-16)
 
 ### 严重问题修复
