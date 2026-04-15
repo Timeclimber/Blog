@@ -378,7 +378,13 @@ func GetTagsByArticleID(articleID int) ([]*models.Tag, error) {
 
 // GetAllMessages 获取所有留言
 func GetAllMessages() ([]*models.Message, error) {
-	query := `SELECT id, name, content, created_at FROM messages ORDER BY created_at DESC`
+	query := `
+	SELECT m.id, m.user_id, m.name, m.content, m.created_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM messages m
+	LEFT JOIN users u ON m.user_id = u.id
+	ORDER BY m.created_at DESC
+	`
 	rows, err := DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -388,10 +394,15 @@ func GetAllMessages() ([]*models.Message, error) {
 	messages := []*models.Message{}
 	for rows.Next() {
 		message := &models.Message{}
-		err := rows.Scan(&message.ID, &message.Name, &message.Content, &message.CreatedAt)
+		user := &models.User{}
+		err := rows.Scan(
+			&message.ID, &message.UserID, &message.Name, &message.Content, &message.CreatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
+		message.User = user
 		messages = append(messages, message)
 	}
 
@@ -399,8 +410,8 @@ func GetAllMessages() ([]*models.Message, error) {
 }
 
 // CreateMessage 创建新留言
-func CreateMessage(name, content string) error {
-	query := `INSERT INTO messages (name, content, created_at) VALUES (?, ?, ?)`
-	_, err := DB.Exec(query, name, content, time.Now())
+func CreateMessage(userID int, name, content string) error {
+	query := `INSERT INTO messages (user_id, name, content, created_at) VALUES (?, ?, ?, ?)`
+	_, err := DB.Exec(query, userID, name, content, time.Now())
 	return err
 }

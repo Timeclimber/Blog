@@ -56,6 +56,9 @@ func main() {
 		api.POST("/tags", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateTag)
 		api.GET("/articles/:article_id/tags", handlers.GetTagsByArticleID)
 		api.POST("/articles/:article_id/tags/:tag_id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.AddTagToArticle)
+
+		// 留言板相关路由
+		api.POST("/messages", handlers.AuthMiddleware(), handlers.CreateMessage)
 	}
 
 	// 首页路由

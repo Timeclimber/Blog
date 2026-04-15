@@ -538,9 +538,21 @@ button:active {
 
 .message-item .message-header {
     display: flex;
-    justify-content: space-between;
+    gap: 0.75rem;
     align-items: center;
     margin-bottom: 1rem;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.message-username {
+    font-weight: 600;
+    color: #333;
 }
 
 .message-item .message-name {
@@ -551,6 +563,17 @@ button:active {
 .message-item .message-time {
     font-size: 0.875rem;
     color: #999;
+    margin-left: auto;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background-color: #f8d7da;
+    border-radius: 8px;
+    border: 1px solid #f5c6cb;
 }
 
 .message-item .message-content {

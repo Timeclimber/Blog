@@ -50,7 +50,9 @@ type ArticleTag struct {
 // Message 留言板模型
 type Message struct {
 	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
 	Name      string    `json:"name"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
+	User      *User     `json:"user,omitempty"`
 }

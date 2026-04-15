@@ -1,5 +1,28 @@
 # 版本更新记录
 
+## 2.3.12 (2026-04-16)
+
+### 功能增强
+- **留言板显示用户头像和用户名**
+  - 更新 Message 模型添加 UserID 和 User 字段
+  - 数据库表 messages 添加 user_id 字段和外键关联
+  - 更新 GetAllMessages() 使用 LEFT JOIN 查询用户信息
+  - 更新 CreateMessage() 添加 user_id 参数
+  - 重写 message_handler.go，添加登录验证和用户ID设置
+  - 留言板前端使用 AJAX 提交方式（POST /api/messages）
+  - 留言显示用户头像（40x40 圆形）和用户名
+  - 添加留言板头像和用户信息的 CSS 样式
+  - 添加错误提示样式（红色背景）
+
+### 修改文件
+- `internal/models/models.go` - 更新 Message 模型
+- `internal/db/db.go` - 更新 messages 表结构
+- `internal/db/operations.go` - 更新留言数据库操作
+- `internal/handlers/message_handler.go` - 重写留言处理器
+- `cmd/web/main.go` - 添加 API 路由 POST /api/messages
+- `web/templates/message.html` - 更新留言板前端
+- `web/static/css/style.css` - 添加留言用户信息样式
+
 ## 2.3.9 (2026-04-16)
 
 ### UI 改进
