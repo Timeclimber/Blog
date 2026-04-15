@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人中心 - 本地个人博客</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.10">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.11">
 </head>
 <body>
     <header>
@@ -129,14 +129,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- 我的评论 -->
-            <section id="my-comments" class="profile-section" style="display: none;">
-                <h3>我的评论</h3>
-                <div id="comments-list">
-                    <p>加载中...</p>
-                </div>
-            </section>
         </div>
     </main>
     <footer>
@@ -190,7 +182,6 @@
                         localStorage.removeItem('user');
                         document.getElementById('login-required').style.display = 'block';
                         document.getElementById('profile-info').style.display = 'none';
-                        document.getElementById('my-comments').style.display = 'none';
                         return;
                     }
 
@@ -201,10 +192,9 @@
 
                 console.log('✅ [前端DEBUG] 开始更新页面显示...');
 
-                // 显示个人信息区域和我的评论，隐藏登录提示
+                // 显示个人信息区域，隐藏登录提示
                 document.getElementById('login-required').style.display = 'none';
                 document.getElementById('profile-info').style.display = 'block';
-                document.getElementById('my-comments').style.display = 'block';
 
                 // 更新导航栏
                 document.getElementById('login-link').style.display = 'none';
@@ -269,53 +259,11 @@
 
                 document.getElementById('login-required').style.display = 'block';
                 document.getElementById('profile-info').style.display = 'none';
-                document.getElementById('my-comments').style.display = 'none';
 
                 if (!error.message?.includes('401') && !error.message?.includes('无效')) {
                     console.warn('⚠️ [前端DEBUG] 临时性错误，Token保留');
                     alert('网络错误或服务器暂时不可用\n请检查网络连接后刷新页面重试\n您的登录状态已保留');
                 }
-            });
-        }
-
-        // 加载我的评论
-        function loadMyComments() {
-            const token = getToken();
-            if (!token) return;
-
-            fetch('/api/my-comments', {
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            })
-            .then(response => response.json())
-            .then(comments => {
-                const commentsList = document.getElementById('comments-list');
-
-                if (comments.length === 0) {
-                    commentsList.innerHTML = '<p>暂无评论</p>';
-                    return;
-                }
-
-                let html = '';
-                comments.forEach(comment => {
-                    const date = new Date(comment.created_at).toLocaleString('zh-CN');
-                    html += `
-                        <div class="comment-item">
-                            <div class="comment-meta">
-                                <span>文章ID: ${comment.article_id}</span>
-                                <span>${date}</span>
-                            </div>
-                            <p>${comment.content}</p>
-                        </div>
-                    `;
-                });
-
-                commentsList.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('获取评论失败:', error);
-                document.getElementById('comments-list').innerHTML = '<p>获取评论失败</p>';
             });
         }
 
@@ -508,7 +456,6 @@
         // 页面加载时初始化
         window.onload = function() {
             loadUserInfo();
-            loadMyComments();
         };
     </script>
 </body>
