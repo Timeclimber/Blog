@@ -262,3 +262,31 @@
 
 ### 修改文件
 - `web/templates/profile.html` - 调整区域默认显示状态
+
+## 2.3.0 (2026-04-16)
+
+### 严重问题修复
+- **[严重] 登录后个人中心页面仍显示"需要登录"**
+  - **根本原因1**: `profile.html` 中 `response` 变量作用域错误
+    - 在第二个 `.then(data)` 回调中访问了只在第一个 `.then(response)` 中有效的 `response` 变量
+    - 导致 `ReferenceError: response is not defined` 错误
+    - JavaScript 执行中断，页面停留在未登录状态
+  
+  - **根本原因2**: `profile.html` 中有多余的 `});` 导致语法错误
+    - 第 377 行有一个多余的括号
+    - 导致整个 `<script>` 块语法错误，JavaScript 完全不执行
+    - 页面无法进行任何动态操作
+  
+  - **解决方案**:
+    - 修复 `response` 变量作用域问题：在第一个 `.then()` 中检查 401 状态
+    - 删除多余的 `});` 语法错误
+    - 优化错误处理逻辑，确保 token 验证正确执行
+
+### 技术改进
+- **JavaScript 错误处理优化**:
+  - 确保 Promise 链正确传递状态
+  - 避免变量作用域错误
+  - 添加更健壮的错误处理机制
+
+### 修改文件
+- `web/templates/profile.html` - 修复 JavaScript 语法和变量作用域错误

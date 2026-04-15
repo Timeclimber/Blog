@@ -27,7 +27,7 @@
     <main>
         <div class="profile-container">
             <!-- 未登录提示 -->
-            <div id="login-required" class="login-required" style="display: none;">
+            <div id="login-required" class="login-required">
                 <h2>🔒 需要登录</h2>
                 <p>请先登录后查看个人信息</p>
                 <a href="/login" class="btn-login">立即登录</a>
@@ -36,7 +36,7 @@
             </div>
 
             <!-- 用户信息卡片 -->
-            <section id="profile-info" class="profile-section">
+            <section id="profile-info" class="profile-section" style="display: none;">
                 <h2>个人信息</h2>
                 
                 <!-- 用户头像和信息展示 -->
@@ -101,7 +101,7 @@
             </section>
 
             <!-- 我的评论 -->
-            <section id="my-comments" class="profile-section">
+            <section id="my-comments" class="profile-section" style="display: none;">
                 <h3>我的评论</h3>
                 <div id="comments-list">
                     <p>加载中...</p>
@@ -144,7 +144,7 @@
             .then(response => {
                 console.log('📡 [前端DEBUG] API响应状态:', response.status);
                 if (response.status === 401) {
-                    throw new Error('Token无效或已过期');
+                    throw new Error('无效的token');
                 }
                 return response.json();
             })
@@ -153,11 +153,19 @@
 
                 if (data.error) {
                     console.error('❌ [前端DEBUG] API返回错误:', data.error);
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    document.getElementById('login-required').style.display = 'block';
-                    document.getElementById('profile-info').style.display = 'none';
-                    document.getElementById('my-comments').style.display = 'none';
+
+                    if (data.error.includes('无效') || data.error.includes('过期') || data.error.includes('未登录')) {
+                        console.log('🔓 [前端DEBUG] Token无效或已过期，清除登录状态');
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        document.getElementById('login-required').style.display = 'block';
+                        document.getElementById('profile-info').style.display = 'none';
+                        document.getElementById('my-comments').style.display = 'none';
+                        return;
+                    }
+
+                    console.warn('⚠️ [前端DEBUG] API错误但Token有效，显示错误信息但不退出登录');
+                    alert('获取用户信息失败: ' + data.error + '\n请稍后重试');
                     return;
                 }
 
@@ -222,9 +230,21 @@
             })
             .catch(error => {
                 console.error('❌ [前端DEBUG] 获取用户信息失败:', error);
+
+                if (error.message && (error.message.includes('401') || error.message.includes('无效') || error.message.includes('过期'))) {
+                    console.log('🔓 [前端DEBUG] 确认Token无效，清除登录状态');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
+
                 document.getElementById('login-required').style.display = 'block';
                 document.getElementById('profile-info').style.display = 'none';
                 document.getElementById('my-comments').style.display = 'none';
+
+                if (!error.message?.includes('401') && !error.message?.includes('无效')) {
+                    console.warn('⚠️ [前端DEBUG] 临时性错误，Token保留');
+                    alert('网络错误或服务器暂时不可用\n请检查网络连接后刷新页面重试\n您的登录状态已保留');
+                }
             });
         }
 
@@ -353,7 +373,6 @@
                 console.error('请求失败详情:', error);
                 messageDiv.textContent = '更新失败: ' + error.message;
                 messageDiv.className = 'form-message error';
-            });
             });
         });
 
