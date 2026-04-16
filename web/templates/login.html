@@ -144,7 +144,10 @@
             .then(data => {
                 if (data.error) {
                     errorMessage.textContent = data.error;
+                    errorMessage.classList.add('show');
                 } else {
+                    errorMessage.textContent = '';
+                    errorMessage.classList.remove('show');
                     // 存储token到localStorage
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
@@ -154,6 +157,7 @@
             })
             .catch(error => {
                 errorMessage.textContent = '登录失败，请稍后重试';
+                errorMessage.classList.add('show');
                 console.error('Error:', error);
             });
         });

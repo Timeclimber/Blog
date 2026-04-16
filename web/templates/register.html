@@ -44,14 +44,32 @@
             background: #555;
         }
         .error-message {
-            color: red;
+            display: none;
+            color: #dc3545;
+            font-size: 0.875rem;
             margin-top: 10px;
             text-align: center;
+            padding: 0.75rem;
+            background-color: #f8d7da;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
+        .error-message.show {
+            display: block;
         }
         .success-message {
-            color: green;
+            display: none;
+            color: #155724;
+            font-size: 0.875rem;
             margin-top: 10px;
             text-align: center;
+            padding: 0.75rem;
+            background-color: #d4edda;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+        }
+        .success-message.show {
+            display: block;
         }
     </style>
 </head>
@@ -154,10 +172,10 @@
             .then(data => {
                 if (data.error) {
                     message.textContent = data.error;
-                    message.className = 'error-message';
+                    message.className = 'error-message show';
                 } else {
                     message.textContent = '注册成功，请登录';
-                    message.className = 'success-message';
+                    message.className = 'success-message show';
                     // 3秒后跳转到登录页
                     setTimeout(() => {
                         window.location.href = '/login';
@@ -166,7 +184,7 @@
             })
             .catch(error => {
                 message.textContent = '注册失败，请稍后重试';
-                message.className = 'error-message';
+                message.className = 'error-message show';
                 console.error('Error:', error);
             });
         });

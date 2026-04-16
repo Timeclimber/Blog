@@ -1,5 +1,24 @@
 # 版本更新记录
 
+## 2.3.13 (2026-04-16)
+
+### Bug 修复
+- **修复错误提示框默认显示问题**
+  - 修改 `.error-message` 样式，默认 `display: none`
+  - 添加 `.error-message.show` 类用于显示错误提示
+  - 修改 `.success-message` 样式，默认 `display: none`
+  - 添加 `.success-message.show` 类用于显示成功提示
+  - 更新留言板 JavaScript，设置错误时添加 show 类
+  - 更新登录页面 JavaScript，设置错误时添加 show 类
+  - 更新注册页面样式和 JavaScript
+  - 更新 message.html CSS 版本号到 v2.3.13
+
+### 修改文件
+- `web/static/css/style.css` - 修复 error-message 默认显示
+- `web/templates/message.html` - 更新错误提示显示逻辑
+- `web/templates/login.html` - 更新错误提示显示逻辑
+- `web/templates/register.html` - 更新错误提示显示逻辑
+
 ## 2.3.12 (2026-04-16)
 
 ### 功能增强
