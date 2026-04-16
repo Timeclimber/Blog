@@ -586,6 +586,29 @@ button:active {
     color: #333;
 }
 
+/* 留言删除按钮样式 */
+.delete-message-btn {
+    background-color: #dc3545;
+    color: #fff;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 0.5rem;
+}
+
+.delete-message-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.delete-message-btn:active {
+    transform: translateY(0);
+}
+
 /* 登录注册页面样式 */
 .auth-form {
     max-width: 450px;
