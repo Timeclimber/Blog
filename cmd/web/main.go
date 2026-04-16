@@ -36,24 +36,29 @@ func main() {
 		api.POST("/login", handlers.Login)
 		api.GET("/user", handlers.AuthMiddleware(), handlers.GetCurrentUser)
 		api.PUT("/user", handlers.AuthMiddleware(), handlers.UpdateCurrentUser)
+		api.PUT("/user/password", handlers.AuthMiddleware(), handlers.UpdatePassword)
 		api.GET("/my-comments", handlers.AuthMiddleware(), handlers.GetMyComments)
 
 		// 文章相关路由
 		api.GET("/articles", handlers.GetAllArticles)
-		api.POST("/articles", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateArticle)
+		api.POST("/articles", handlers.AuthMiddleware(), handlers.CreateArticle)
 		api.GET("/articles/detail/:id", handlers.GetArticle)
-		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.UpdateArticle)
-		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.DeleteArticle)
+		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.UpdateArticle)
+		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.DeleteArticle)
 
 		// 评论相关路由
 		api.POST("/comments", handlers.AuthMiddleware(), handlers.CreateComment)
 		api.GET("/articles/:article_id/comments", handlers.GetCommentsByArticleID)
+		api.DELETE("/comments/:id", handlers.AuthMiddleware(), handlers.DeleteComment)
 
 		// 标签相关路由
 		api.GET("/tags", handlers.GetAllTags)
 		api.POST("/tags", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateTag)
 		api.GET("/articles/:article_id/tags", handlers.GetTagsByArticleID)
 		api.POST("/articles/:article_id/tags/:tag_id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.AddTagToArticle)
+
+		// 留言板相关路由
+		api.POST("/messages", handlers.AuthMiddleware(), handlers.CreateMessage)
 	}
 
 	// 首页路由

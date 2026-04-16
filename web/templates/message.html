@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>留言板 - 本地个人博客</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.12">
 </head>
 <body>
     <header>
@@ -29,7 +29,8 @@
         <section id="message-board">
             <h2>留言板</h2>
             <div id="message-form">
-                <form method="post" action="/message">
+                <form id="message-submit-form">
+                    <div id="message-error" class="error-message"></div>
                     <div class="form-group">
                         <label for="name">姓名</label>
                         <input type="text" id="name" name="name" required>
@@ -45,7 +46,13 @@
                 {{range .}}
                 <div class="message-item">
                     <div class="message-header">
-                        <span class="message-name">{{.Name}}</span>
+                        {{if .User}}
+                        <img src="{{.User.AvatarURL}}" alt="头像" class="message-avatar" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=default'">
+                        <span class="message-username">{{.User.Username}}</span>
+                        {{else}}
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="头像" class="message-avatar">
+                        <span class="message-username">{{.Name}}</span>
+                        {{end}}
                         <span class="message-time">{{.CreatedAt.Format "2006-01-02 15:04:05"}}</span>
                     </div>
                     <div class="message-content">{{.Content}}</div>
@@ -91,6 +98,51 @@
                 window.location.href = '/';
             });
         }
+
+        // 留言提交
+        document.getElementById('message-submit-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录后再留言！');
+                window.location.href = '/login';
+                return;
+            }
+
+            const name = document.getElementById('name').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const errorDiv = document.getElementById('message-error');
+
+            if (!name || !content) {
+                errorDiv.textContent = '姓名和留言内容不能为空';
+                return;
+            }
+
+            fetch('/api/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ name, content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                } else {
+                    errorDiv.textContent = '';
+                    document.getElementById('name').value = '';
+                    document.getElementById('content').value = '';
+                    alert('留言成功！');
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                errorDiv.textContent = '留言失败：' + err.message;
+            });
+        });
 
         window.onload = checkLoginStatus;
     </script>

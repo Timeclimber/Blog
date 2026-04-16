@@ -1,5 +1,137 @@
 # 版本更新记录
 
+## 2.3.12 (2026-04-16)
+
+### 功能增强
+- **留言板显示用户头像和用户名**
+  - 更新 Message 模型添加 UserID 和 User 字段
+  - 数据库表 messages 添加 user_id 字段和外键关联
+  - 更新 GetAllMessages() 使用 LEFT JOIN 查询用户信息
+  - 更新 CreateMessage() 添加 user_id 参数
+  - 重写 message_handler.go，添加登录验证和用户ID设置
+  - 留言板前端使用 AJAX 提交方式（POST /api/messages）
+  - 留言显示用户头像（40x40 圆形）和用户名
+  - 添加留言板头像和用户信息的 CSS 样式
+  - 添加错误提示样式（红色背景）
+
+### 修改文件
+- `internal/models/models.go` - 更新 Message 模型
+- `internal/db/db.go` - 更新 messages 表结构
+- `internal/db/operations.go` - 更新留言数据库操作
+- `internal/handlers/message_handler.go` - 重写留言处理器
+- `cmd/web/main.go` - 添加 API 路由 POST /api/messages
+- `web/templates/message.html` - 更新留言板前端
+- `web/static/css/style.css` - 添加留言用户信息样式
+
+## 2.3.9 (2026-04-16)
+
+### UI 改进
+- **个人中心页面重新设计**
+  - 添加标签页导航（个人信息/编辑资料/修改密码）
+  - 默认显示个人信息标签页
+  - 点击标签按钮切换不同功能区域
+  - 添加标签页切换动画效果
+  - 移除重复的标题，界面更简洁
+  - 添加标签页的 CSS 样式（悬停/选中状态）
+
+### 修改文件
+- `web/templates/profile.html` - 添加标签页导航和切换逻辑
+- `web/static/css/style.css` - 添加标签页相关样式
+
+## 2.3.8 (2026-04-16)
+
+### 功能增强
+- **添加修改密码功能**
+  - 个人中心页面新增修改密码表单
+  - 验证当前密码后才能修改新密码
+  - 新密码需要确认输入，防止误输
+  - 密码使用 bcrypt 安全哈希存储
+  - 新增 PUT /api/user/password 路由
+  - 新增 UpdateUserPassword 数据库操作函数
+  - 新增 UpdatePassword 处理器
+  - 前端显示成功/失败提示，3秒后自动消失
+
+### 修改文件
+- `web/templates/profile.html` - 添加修改密码表单和前端逻辑
+- `internal/handlers/user_handler.go` - 添加修改密码处理器
+- `internal/db/operations.go` - 添加更新密码的数据库操作
+- `cmd/web/main.go` - 添加修改密码路由
+
+## 2.3.7 (2026-04-16)
+
+### 功能增强
+- **添加文章删除功能**
+  - 新增 `Article` 模型添加 `UserID` 和 `User` 字段
+  - 数据库表 `articles` 添加 `user_id` 字段，关联用户信息
+  - 更新数据库查询函数，添加 LEFT JOIN 获取文章作者信息
+  - 完善文章删除权限验证：仅文章作者和管理员可删除
+  - 首页文章列表显示作者头像和用户名
+  - 首页添加文章删除按钮（仅作者和管理员可见）
+  - 文章详情页添加文章删除按钮（仅作者和管理员可见）
+  - 删除按钮点击确认，防止误操作
+
+### 修改文件
+- `internal/models/models.go` - 文章模型添加UserID和User字段
+- `internal/db/db.go` - 数据库表添加user_id字段
+- `internal/db/operations.go` - 更新文章相关数据库操作
+- `internal/handlers/article_handler.go` - 完善文章创建、更新、删除权限验证
+- `web/templates/index.html` - 首页添加作者信息和删除按钮
+- `web/templates/article.html` - 文章详情页添加删除按钮
+- `web/static/css/style.css` - 添加文章作者信息和删除按钮样式
+
+## 2.3.6 (2026-04-16)
+
+### 功能增强
+- **添加评论删除功能**
+  - 新增 `GetCommentByID` 和 `DeleteComment` 数据库操作函数
+  - 新增 `DeleteComment` 处理器，带权限验证
+  - 新增 `DELETE /api/comments/:id` 路由
+  - 前端显示删除按钮（仅评论作者和管理员可见）
+  - 删除按钮点击确认，防止误操作
+  - 删除成功后自动刷新页面
+
+### 修改文件
+- `internal/db/operations.go` - 添加评论删除相关数据库操作
+- `internal/handlers/comment_handler.go` - 添加删除评论处理器
+- `cmd/web/main.go` - 添加删除评论路由
+- `web/templates/article.html` - 添加删除按钮和前端逻辑
+- `web/static/css/style.css` - 添加删除按钮样式
+
+## 2.3.5 (2026-04-16)
+
+### 功能修复
+- **修复评论不显示用户信息问题**
+  - 修复 `GetCommentsByArticleID` 数据库查询缺少 `gender` 和 `avatar_url` 字段
+  - 更新前端 `article.html` 显示评论用户头像和用户名
+  - 添加评论用户信息的 CSS 样式，提升视觉效果
+
+### 修改文件
+- `internal/db/operations.go` - 修复评论查询缺少的字段
+- `web/templates/article.html` - 添加评论用户信息显示
+- `web/static/css/style.css` - 添加评论用户信息样式
+
+## 2.3.4 (2026-04-16)
+
+### 功能修复
+- **修复文章详情页404问题**
+  - 修正首页文章链接从 `/article?id=xxx` 到 `/article.html?id=xxx`
+  - 修复路由与链接不匹配导致的404错误
+
+### 修改文件
+- `web/templates/index.html` - 修正文章详情页链接
+
+## 2.3.3 (2026-04-16)
+
+### 功能修复
+- **修复发表文章无权限问题**
+  - 移除 `POST /api/articles` 路由中的 `AdminMiddleware()` 限制
+  - 移除 `PUT /api/articles/detail/:id` 路由中的 `AdminMiddleware()` 限制
+  - 移除 `DELETE /api/articles/detail/:id` 路由中的 `AdminMiddleware()` 限制
+  - 现在所有登录用户都可以创建、编辑和删除文章
+
+### 修改文件
+- `cmd/web/main.go` - 移除文章操作的管理员权限限制
+
 ## 2.3.2 (2026-04-16)
 
 ### 仓库清理

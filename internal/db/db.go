@@ -67,12 +67,19 @@ func createTables() error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
+		user_id INTEGER NOT NULL DEFAULT 1,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`)
 	if err != nil {
 		return err
+	}
+
+	// 添加 user_id 字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE articles ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
 	}
 
 	// 创建评论表
@@ -120,13 +127,21 @@ func createTables() error {
 	_, err = DB.Exec(`
 	CREATE TABLE IF NOT EXISTS messages (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL DEFAULT 1,
 		name TEXT NOT NULL,
 		content TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	)
 	`)
 	if err != nil {
 		return err
+	}
+
+	// 添加 user_id 字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE messages ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
 	}
 
 	// 创建索引
@@ -143,7 +158,7 @@ func createTables() error {
 	// 创建默认管理员用户（密码：admin123）
 	_, err = DB.Exec(`
 	INSERT OR REPLACE INTO users (id, username, password_hash, email, role, created_at) 
-	VALUES (1, 'admin', '$2a$10$Sd25M9kwYyn6V7DTn7vv.uz1r.zOKILt3PcplICAEWsW3/qkRn4hO', 'admin@example.com', 'admin', CURRENT_TIMESTAMP)
+	VALUES (1, 'admin', '$2a$10$c80gEgUVSBMbL63RmrL.9.TyGcyMD.muWQXyPt/xSxxgYLDX8jTJG', 'admin@example.com', 'admin', CURRENT_TIMESTAMP)
 	`)
 	if err != nil {
 		return err
