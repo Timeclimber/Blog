@@ -20,6 +20,7 @@
                     <img id="nav-avatar" src="" alt="头像" style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle; margin-right: 5px;">
                     <span id="nav-username"></span>
                     <a href="/profile" id="profile-link">个人中心</a>
+                    <a href="#" id="logout-link">退出</a>
                 </div>
             </nav>
         </div>
@@ -451,6 +452,14 @@
                 const tabName = this.dataset.tab;
                 switchTab(tabName);
             });
+        });
+
+        // 退出登录
+        document.getElementById('logout-link')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
         });
 
         // 页面加载时初始化

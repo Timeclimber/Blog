@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Article.Title}} - 本地个人博客</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.7">
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.16">
 </head>
 <body>
     <header>
@@ -74,10 +74,98 @@
         <p>&copy; 2026 本地个人博客</p>
     </footer>
 
+    <!-- 自定义确认弹窗 -->
+    <div id="confirm-overlay" class="confirm-overlay">
+        <div class="confirm-modal">
+            <div class="confirm-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+            </div>
+            <h3 class="confirm-title" id="confirm-title">确认操作</h3>
+            <p class="confirm-message" id="confirm-message">确定要执行此操作吗？</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-btn-cancel" id="confirm-cancel">取消</button>
+                <button class="confirm-btn confirm-btn-confirm" id="confirm-ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功提示弹窗 -->
+    <div id="toast-overlay" class="toast-overlay">
+        <div class="toast-modal">
+            <div class="toast-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h3 class="toast-title" id="toast-title">操作成功</h3>
+            <p class="toast-message" id="toast-message">操作已成功完成！</p>
+            <button class="toast-btn" id="toast-ok">确定</button>
+        </div>
+    </div>
+
     <script>
         const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         const ARTICLE_ID = new URLSearchParams(window.location.search).get('id');
         let currentUser = null;
+        let confirmCallback = null;
+        let toastCallback = null;
+
+        // 自定义确认弹窗
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            document.getElementById('confirm-overlay').classList.add('show');
+            confirmCallback = callback;
+        }
+
+        function hideConfirm() {
+            document.getElementById('confirm-overlay').classList.remove('show');
+            confirmCallback = null;
+        }
+
+        // 自定义成功提示弹窗
+        function showToast(title, message, callback) {
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-overlay').classList.add('show');
+            toastCallback = callback;
+        }
+
+        function hideToast() {
+            document.getElementById('toast-overlay').classList.remove('show');
+            if (toastCallback) {
+                toastCallback();
+            }
+            toastCallback = null;
+        }
+
+        // 绑定确认弹窗按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('confirm-cancel').addEventListener('click', hideConfirm);
+            document.getElementById('confirm-ok').addEventListener('click', function() {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                hideConfirm();
+            });
+            document.getElementById('confirm-overlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideConfirm();
+                }
+            });
+
+            // 绑定成功提示按钮事件
+            document.getElementById('toast-ok').addEventListener('click', hideToast);
+            document.getElementById('toast-overlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideToast();
+                }
+            });
+        });
 
         function checkLoginStatus() {
             const token = localStorage.getItem('token');
@@ -135,8 +223,9 @@
 
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('请先登录后再评论！');
-                window.location.href = '/login';
+                showToast('提示', '请先登录后再评论！', function() {
+                    window.location.href = '/login';
+                });
                 return;
             }
 
@@ -166,8 +255,9 @@
                 } else {
                     errorDiv.textContent = '';
                     document.getElementById('comment-content').value = '';
-                    alert('评论成功！');
-                    window.location.reload();
+                    showToast('评论成功', '评论发表成功！', function() {
+                        window.location.reload();
+                    });
                 }
             })
             .catch(err => {
@@ -183,31 +273,30 @@
                 const token = localStorage.getItem('token');
                 
                 if (!token) {
-                    alert('请先登录！');
+                    showToast('提示', '请先登录！');
                     return;
                 }
 
-                if (!confirm('确定要删除这条评论吗？')) {
-                    return;
-                }
-
-                fetch(`/api/comments/${commentId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                    alert(data.error);
-                    } else {
-                    alert('评论删除成功！');
-                    window.location.reload();
-                    }
-                })
-                .catch(err => {
-                    alert('删除失败：' + err.message);
+                showConfirm('删除评论', '确定要删除这条评论吗？删除后无法恢复！', function() {
+                    fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            showToast('错误', data.error);
+                        } else {
+                            showToast('删除成功', '评论删除成功！', function() {
+                                window.location.reload();
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        showToast('错误', '删除失败：' + err.message);
+                    });
                 });
             }
         });
@@ -220,31 +309,30 @@
                 const token = localStorage.getItem('token');
                 
                 if (!token) {
-                    alert('请先登录！');
+                    showToast('提示', '请先登录！');
                     return;
                 }
 
-                if (!confirm('确定要删除这篇文章吗？')) {
-                    return;
-                }
-
-                fetch(`/api/articles/detail/${articleId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                    alert(data.error);
-                    } else {
-                    alert('文章删除成功！');
-                    window.location.href = '/';
-                    }
-                })
-                .catch(err => {
-                    alert('删除失败：' + err.message);
+                showConfirm('删除文章', '确定要删除这篇文章吗？删除后无法恢复！', function() {
+                    fetch(`/api/articles/detail/${articleId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            showToast('错误', data.error);
+                        } else {
+                            showToast('删除成功', '文章删除成功！', function() {
+                                window.location.href = '/';
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        showToast('错误', '删除失败：' + err.message);
+                    });
                 });
             }
         });
