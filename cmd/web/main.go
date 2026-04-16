@@ -59,6 +59,7 @@ func main() {
 
 		// 留言板相关路由
 		api.POST("/messages", handlers.AuthMiddleware(), handlers.CreateMessage)
+		api.DELETE("/messages/:id", handlers.AuthMiddleware(), handlers.DeleteMessage)
 	}
 
 	// 首页路由

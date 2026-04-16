@@ -415,3 +415,32 @@ func CreateMessage(userID int, name, content string) error {
 	_, err := DB.Exec(query, userID, name, content, time.Now())
 	return err
 }
+
+// GetMessageByID 根据ID获取留言
+func GetMessageByID(id int) (*models.Message, error) {
+	query := `
+	SELECT m.id, m.user_id, m.name, m.content, m.created_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM messages m
+	LEFT JOIN users u ON m.user_id = u.id
+	WHERE m.id = ?
+	`
+	message := &models.Message{}
+	user := &models.User{}
+	err := DB.QueryRow(query, id).Scan(
+		&message.ID, &message.UserID, &message.Name, &message.Content, &message.CreatedAt,
+		&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	message.User = user
+	return message, nil
+}
+
+// DeleteMessage 删除留言
+func DeleteMessage(id int) error {
+	query := `DELETE FROM messages WHERE id = ?`
+	_, err := DB.Exec(query, id)
+	return err
+}

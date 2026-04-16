@@ -1,5 +1,45 @@
 # 版本更新记录
 
+## 2.3.14 (2026-04-16)
+
+### 功能增强
+- **留言板添加删除功能**
+  - 添加 GetMessageByID() 数据库操作函数
+  - 添加 DeleteMessage() 数据库操作函数
+  - 添加 DeleteMessage() 处理器，带权限验证
+  - 只有留言作者或管理员可以删除留言
+  - 新增 API 路由 DELETE /api/messages/:id
+  - 前端添加删除按钮（仅作者和管理员可见）
+  - 添加删除留言的 JavaScript 逻辑
+  - 添加删除按钮的 CSS 样式（红色按钮，悬停效果）
+  - 更新 message.html CSS 版本号到 v2.3.14
+
+### 修改文件
+- `internal/db/operations.go` - 添加留言删除相关操作
+- `internal/handlers/message_handler.go` - 添加删除留言处理器
+- `cmd/web/main.go` - 添加 DELETE /api/messages/:id 路由
+- `web/templates/message.html` - 添加删除按钮和前端逻辑
+- `web/static/css/style.css` - 添加删除按钮样式
+
+## 2.3.13 (2026-04-16)
+
+### Bug 修复
+- **修复错误提示框默认显示问题**
+  - 修改 `.error-message` 样式，默认 `display: none`
+  - 添加 `.error-message.show` 类用于显示错误提示
+  - 修改 `.success-message` 样式，默认 `display: none`
+  - 添加 `.success-message.show` 类用于显示成功提示
+  - 更新留言板 JavaScript，设置错误时添加 show 类
+  - 更新登录页面 JavaScript，设置错误时添加 show 类
+  - 更新注册页面样式和 JavaScript
+  - 更新 message.html CSS 版本号到 v2.3.13
+
+### 修改文件
+- `web/static/css/style.css` - 修复 error-message 默认显示
+- `web/templates/message.html` - 更新错误提示显示逻辑
+- `web/templates/login.html` - 更新错误提示显示逻辑
+- `web/templates/register.html` - 更新错误提示显示逻辑
+
 ## 2.3.12 (2026-04-16)
 
 ### 功能增强
