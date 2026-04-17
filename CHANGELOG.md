@@ -1,5 +1,25 @@
 # 版本更新记录
 
+## 3.0.1 (2026-04-17)
+
+### 项目清理
+- **删除冗余文件**：
+  - 临时脚本文件（fix-deps.bat, install-deps.bat, setup-and-run.ps1, setup-vite-*.ps1）
+  - 编译产物（blog.db, main.exe, web.exe）
+  - 调试文档（PERSONAL_INFO_DEBUG_GUIDE.md）
+  - 根目录的 package-lock.json（前端项目在 blog-next 目录）
+
+- **删除冗余目录**：
+  - `.vite/` - Vite 缓存目录
+  - `node_modules/` - 根目录的 node_modules
+  - `web-frontend/` - 旧的前端目录
+
+- **文件更新**：
+  - `.gitignore` - 修复编码问题，确保正确忽略不需要的文件
+
+### 版本更新
+- **提交 package-lock.json**：确保前端依赖版本一致性
+
 ## 3.0.0 (2026-04-17)
 
 ### 重大变更
