@@ -22,7 +22,7 @@ var jwtSecret = []byte("your-secret-key")
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=50"`
 	Password string `json:"password" binding:"required,min=6"`
-	Email    string `json:"email" binding:"required,email"`
+	Email    string `json:"email"`
 }
 
 // LoginRequest 登录请求
@@ -45,60 +45,69 @@ type Claims struct {
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的请求参数"})
 		return
 	}
 
 	// 检查用户名是否已存在
 	_, err := db.GetUserByUsername(req.Username)
 	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "用户名已存在"})
+		c.JSON(http.StatusConflict, gin.H{"success": false, "message": "用户名已存在"})
 		return
 	}
 
 	// 哈希密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "密码加密失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "密码加密失败"})
 		return
+	}
+
+	// 如果没有提供email，使用默认值
+	email := req.Email
+	if email == "" {
+		email = req.Username + "@example.com"
 	}
 
 	// 创建用户
 	user := &models.User{
 		Username:     req.Username,
 		PasswordHash: string(hashedPassword),
-		Email:        req.Email,
+		Email:        email,
 		Role:         "user", // 默认普通用户
 	}
 
 	err = db.CreateUser(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建用户失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "创建用户失败"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "注册成功"})
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"message": "注册成功",
+	})
 }
 
 // Login 用户登录
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的请求参数"})
 		return
 	}
 
 	// 获取用户
 	user, err := db.GetUserByUsername(req.Username)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "用户名或密码错误"})
 		return
 	}
 
 	// 验证密码
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "用户名或密码错误"})
 		return
 	}
 
@@ -116,17 +125,20 @@ func Login(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成token失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "生成token失败"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": tokenString,
-		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
-			"role":     user.Role,
+		"success": true,
+		"data": gin.H{
+			"token": tokenString,
+			"user": gin.H{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+				"role":     user.Role,
+			},
 		},
 	})
 }
@@ -195,7 +207,10 @@ func GetCurrentUser(c *gin.Context) {
 
 	log.Printf("📤 [DEBUG] API返回给前端的数据: %+v", responseData)
 
-	c.JSON(http.StatusOK, responseData)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    responseData,
+	})
 }
 
 // UpdateUserRequest 更新用户信息请求
