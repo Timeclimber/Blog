@@ -225,14 +225,14 @@ type UpdateUserRequest struct {
 func UpdateCurrentUser(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	// 从gin.H中提取用户ID并查询完整用户对象
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -247,19 +247,19 @@ func UpdateCurrentUser(c *gin.Context) {
 		userID = int(v)
 	default:
 		log.Printf("无法识别的用户ID类型: %T", userMap["id"])
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 
 	currentUser, err := db.GetUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "用户不存在: " + err.Error()})
 		return
 	}
 
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的请求参数: " + err.Error()})
 		return
 	}
 
@@ -269,7 +269,7 @@ func UpdateCurrentUser(c *gin.Context) {
 	// 检查用户名是否被其他用户使用
 	existingUser, err := db.GetUserByUsername(req.Username)
 	if err == nil && existingUser.ID != currentUser.ID {
-		c.JSON(http.StatusConflict, gin.H{"error": "用户名已被占用"})
+		c.JSON(http.StatusConflict, gin.H{"success": false, "message": "用户名已被占用"})
 		return
 	}
 
@@ -284,10 +284,10 @@ func UpdateCurrentUser(c *gin.Context) {
 		log.Printf("更新用户数据库失败: %v", err)
 		// 检查是否是唯一约束冲突（邮箱已被使用）
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") || strings.Contains(err.Error(), "unique") {
-			c.JSON(http.StatusConflict, gin.H{"error": "该邮箱已被其他用户使用"})
+			c.JSON(http.StatusConflict, gin.H{"success": false, "message": "该邮箱已被其他用户使用"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户信息失败: " + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新用户信息失败: " + err.Error()})
 		return
 	}
 
@@ -295,12 +295,16 @@ func UpdateCurrentUser(c *gin.Context) {
 
 	// 返回更新后的用户信息（不包含密码）
 	c.JSON(http.StatusOK, gin.H{
-		"id":         currentUser.ID,
-		"username":   currentUser.Username,
-		"email":      currentUser.Email,
-		"gender":     currentUser.Gender,
-		"avatar_url": currentUser.AvatarURL,
-		"role":       currentUser.Role,
+		"success": true,
+		"message": "用户信息更新成功",
+		"data": gin.H{
+			"id":         currentUser.ID,
+			"username":   currentUser.Username,
+			"email":      currentUser.Email,
+			"gender":     currentUser.Gender,
+			"avatar_url": currentUser.AvatarURL,
+			"role":       currentUser.Role,
+		},
 	})
 }
 
@@ -308,14 +312,14 @@ func UpdateCurrentUser(c *gin.Context) {
 func GetMyComments(c *gin.Context) {
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	// 从gin.H中提取用户ID
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -330,17 +334,20 @@ func GetMyComments(c *gin.Context) {
 		userID = int(v)
 	default:
 		log.Printf("无法识别的用户ID类型: %T", userMap["id"])
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 
 	comments, err := db.GetCommentsByUserID(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取评论失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, comments)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    comments,
+	})
 }
 
 // UpdatePasswordRequest 修改密码请求
@@ -353,20 +360,20 @@ type UpdatePasswordRequest struct {
 func UpdatePassword(c *gin.Context) {
 	var req UpdatePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的请求参数"})
 		return
 	}
 
 	// 从上下文中获取用户信息
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -380,28 +387,28 @@ func UpdatePassword(c *gin.Context) {
 	case int64:
 		userID = int(v)
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 
 	// 从数据库查询用户
 	currentUser, err := db.GetUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户不存在"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "用户不存在"})
 		return
 	}
 
 	// 验证当前密码
 	err = bcrypt.CompareHashAndPassword([]byte(currentUser.PasswordHash), []byte(req.CurrentPassword))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "当前密码不正确"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "当前密码不正确"})
 		return
 	}
 
 	// 哈希新密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "密码加密失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "密码加密失败"})
 		return
 	}
 
@@ -409,9 +416,12 @@ func UpdatePassword(c *gin.Context) {
 	currentUser.PasswordHash = string(hashedPassword)
 	err = db.UpdateUserPassword(currentUser)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新密码失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新密码失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "密码修改成功",
+	})
 }

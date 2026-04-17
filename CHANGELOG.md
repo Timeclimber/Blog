@@ -1,5 +1,65 @@
 # 版本更新记录
 
+## 3.1.0 (2026-04-17)
+
+### 重大功能更新
+- **完整个人中心功能恢复**：
+  - 个人信息展示（头像、用户名、邮箱、性别、注册时间）
+  - 编辑资料功能（修改用户名、邮箱、性别、头像 URL）
+  - 修改密码功能（验证当前密码，设置新密码）
+  - 三个标签页导航，切换流畅
+
+- **完整文章管理功能恢复**：
+  - 写文章功能（标题、内容输入，好看的表单设计）
+  - 首页文章列表（显示作者头像、发布时间、删除按钮）
+  - 文章详情页（完整内容展示、作者信息、删除文章按钮）
+
+- **完整评论系统恢复**：
+  - 发表评论功能（登录用户可发表评论）
+  - 评论列表展示（显示评论作者头像、用户名、发布时间）
+  - 删除评论功能（只有评论作者和管理员可删除）
+
+### UI/UX 改进
+- **新增 Toast 提示弹窗组件**：
+  - 支持成功、错误、警告、信息四种类型
+  - 每种都有对应的图标和颜色
+  - 3 秒自动消失，可手动关闭
+  - 动画效果流畅
+
+- **新增 ConfirmDialog 确认对话框组件**：
+  - 大图标（警告/成功/信息）
+  - 渐变背景和动画效果
+  - 双按钮设计（取消/确认）
+  - 悬停效果，交互友好
+
+- **页面美化**：
+  - 所有页面采用卡片式设计
+  - 响应式布局，适配不同屏幕
+  - 平滑过渡动画
+  - 加载状态动画
+  - 空状态友好提示
+
+### 后端修复
+- **统一 API 响应格式**：
+  - 文章相关 API（创建、获取、更新、删除）统一响应格式
+  - 评论相关 API（创建、获取、删除）统一响应格式
+  - 用户相关 API（获取信息、更新信息、修改密码）统一响应格式
+  - 所有接口使用 `{ success: boolean, data?: any, message?: string }` 格式
+
+### 新增文件
+- `blog-next/src/components/Toast.tsx` - Toast 提示弹窗组件
+- `blog-next/src/components/ConfirmDialog.tsx` - 确认对话框组件
+
+### 修改文件
+- `blog-next/src/App.tsx` - 包裹 ToastProvider 和 ConfirmDialogProvider
+- `blog-next/src/pages/Home.tsx` - 完善首页文章列表和删除功能
+- `blog-next/src/pages/Article.tsx` - 完善文章详情页和评论功能
+- `blog-next/src/pages/NewArticle.tsx` - 美化写文章页面
+- `blog-next/src/pages/Profile.tsx` - 完善个人中心三个标签页功能
+- `internal/handlers/article_handler.go` - 统一文章 API 响应格式
+- `internal/handlers/comment_handler.go` - 统一评论 API 响应格式
+- `internal/handlers/user_handler.go` - 统一用户 API 响应格式
+
 ## 3.0.1 (2026-04-17)
 
 ### 项目清理

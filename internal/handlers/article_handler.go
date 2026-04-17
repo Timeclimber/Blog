@@ -14,20 +14,20 @@ import (
 func CreateArticle(c *gin.Context) {
 	var article models.Article
 	if err := c.ShouldBindJSON(&article); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
 	// 从上下文中获取用户信息
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -40,25 +40,25 @@ func CreateArticle(c *gin.Context) {
 	case int64:
 		userID = int(v)
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 	article.UserID = userID
 
 	err := db.CreateArticle(&article)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "创建文章失败"})
 		return
 	}
 
 	// 获取完整的文章信息（包含用户信息）
 	updatedArticle, err := db.GetArticleByID(article.ID)
 	if err == nil {
-		c.JSON(http.StatusCreated, updatedArticle)
+		c.JSON(http.StatusCreated, gin.H{"success": true, "data": updatedArticle})
 		return
 	}
 
-	c.JSON(http.StatusCreated, article)
+	c.JSON(http.StatusCreated, gin.H{"success": true, "data": article})
 }
 
 // GetArticle 获取文章详情
@@ -66,32 +66,35 @@ func GetArticle(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的文章ID"})
 		return
 	}
 
 	article, err := db.GetArticleByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "文章不存在"})
 		return
 	}
 
 	comments, err := db.GetCommentsByArticleID(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取评论失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取评论失败"})
 		return
 	}
 
 	tags, err := db.GetTagsByArticleID(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取标签失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取标签失败"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"article":  article,
-		"comments": comments,
-		"tags":     tags,
+		"success": true,
+		"data": gin.H{
+			"article":  article,
+			"comments": comments,
+			"tags":     tags,
+		},
 	})
 }
 
@@ -99,11 +102,11 @@ func GetArticle(c *gin.Context) {
 func GetAllArticles(c *gin.Context) {
 	articles, err := db.GetAllArticles()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取文章列表失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取文章列表失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, articles)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": articles})
 }
 
 // UpdateArticle 更新文章
@@ -111,27 +114,27 @@ func UpdateArticle(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的文章ID"})
 		return
 	}
 
 	// 获取文章信息
 	article, err := db.GetArticleByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "文章不存在"})
 		return
 	}
 
 	// 从上下文中获取用户信息
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -144,7 +147,7 @@ func UpdateArticle(c *gin.Context) {
 	case int64:
 		currentUserID = int(v)
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 
@@ -152,13 +155,13 @@ func UpdateArticle(c *gin.Context) {
 
 	// 检查权限：只有文章作者或管理员可以更新
 	if currentUserID != article.UserID && role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "无权限编辑此文章"})
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "无权限编辑此文章"})
 		return
 	}
 
 	var articleData models.Article
 	if err := c.ShouldBindJSON(&articleData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
@@ -166,18 +169,18 @@ func UpdateArticle(c *gin.Context) {
 	articleData.UserID = article.UserID
 	err = db.UpdateArticle(&articleData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新文章失败"})
 		return
 	}
 
 	// 获取完整的文章信息（包含用户信息）
 	updatedArticle, err := db.GetArticleByID(id)
 	if err == nil {
-		c.JSON(http.StatusOK, updatedArticle)
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": updatedArticle})
 		return
 	}
 
-	c.JSON(http.StatusOK, articleData)
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": articleData})
 }
 
 // DeleteArticle 删除文章
@@ -185,27 +188,27 @@ func DeleteArticle(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的文章ID"})
 		return
 	}
 
 	// 获取文章信息
 	article, err := db.GetArticleByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "文章不存在"})
 		return
 	}
 
 	// 从上下文中获取用户信息
 	user, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 		return
 	}
 
 	userMap, ok := user.(gin.H)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取用户信息失败"})
 		return
 	}
 
@@ -218,7 +221,7 @@ func DeleteArticle(c *gin.Context) {
 	case int64:
 		currentUserID = int(v)
 	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "无效的用户ID格式"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "无效的用户ID格式"})
 		return
 	}
 
@@ -226,15 +229,15 @@ func DeleteArticle(c *gin.Context) {
 
 	// 检查权限：只有文章作者或管理员可以删除
 	if currentUserID != article.UserID && role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "无权限删除此文章"})
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "无权限删除此文章"})
 		return
 	}
 
 	err = db.DeleteArticle(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "删除文章失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "文章删除成功"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "文章删除成功"})
 }
