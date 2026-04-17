@@ -1,5 +1,31 @@
 # 版本更新记录
 
+## 3.0.0 (2026-04-17)
+
+### 重大变更
+- **前端框架升级**：从传统 HTML/CSS/JS 升级到 React + Vite + TypeScript
+- **项目结构重构**：使用现代前端架构，分离前后端
+- **API 响应格式统一**：所有接口使用 `{ success: boolean, data?: any, message?: string }` 格式
+
+### 功能修复
+- **登录后个人中心访问问题**：修复认证中间件和用户信息接口的响应格式
+- **前端依赖问题**：解决 Tailwind CSS v4 兼容性问题，降级到 v3.4.17
+- **Vite ESM 模块问题**：通过配置调整解决 ESM 加载错误
+- **页面标题乱码问题**：修复 index.html 中的标题编码问题
+
+### 技术改进
+- **前端现代化**：使用 React 18 + Vite 5 + TypeScript 5
+- **路由系统**：使用 React Router v6 实现客户端路由
+- **状态管理**：使用 localStorage 存储用户认证信息
+- **构建工具**：使用 Vite 提供快速的开发体验
+
+### 修改文件
+- `blog-next/package.json` - 前端项目配置和依赖管理
+- `blog-next/vite.config.mts` - Vite 构建配置
+- `blog-next/src/` - 前端 React 代码
+- `internal/handlers/auth_middleware.go` - 统一错误响应格式
+- `internal/handlers/user_handler.go` - 统一 API 响应格式
+
 ## 2.3.18 (2026-04-16)
 
 ### UI 改进

@@ -13,7 +13,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "未提供认证token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未提供认证token"})
 			c.Abort()
 			return
 		}
@@ -21,7 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 检查Bearer前缀
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "认证格式错误"})
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "认证格式错误"})
 			c.Abort()
 			return
 		}
@@ -35,7 +35,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "无效的token"})
 			c.Abort()
 			return
 		}
@@ -56,14 +56,14 @@ func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, exists := c.Get("user")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "未登录"})
 			c.Abort()
 			return
 		}
 
 		userMap, ok := user.(gin.H)
 		if !ok || userMap["role"] != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "无权限访问"})
+			c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "无权限访问"})
 			c.Abort()
 			return
 		}
