@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 import { useToast } from "../components/Toast"
+import { useAuth } from "../contexts/AuthContext"
+import UserAvatar from "../components/UserAvatar"
 
 type Tab = "info" | "edit" | "password"
 
@@ -30,14 +32,14 @@ const Profile = () => {
   })
   const [submitting, setSubmitting] = useState(false)
   const { showToast } = useToast()
+  const { user: authUser, token: authToken, login } = useAuth()
 
   useEffect(() => {
     loadUser()
   }, [])
 
   const loadUser = async () => {
-    const token = localStorage.getItem("token")
-    if (!token) {
+    if (!authToken) {
       setLoading(false)
       return
     }
@@ -45,7 +47,7 @@ const Profile = () => {
     try {
       const res = await fetch("/api/user", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${authToken}`,
         },
       })
       const data = await res.json()
@@ -68,15 +70,14 @@ const Profile = () => {
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const token = localStorage.getItem("token")
-    if (!token) return
+    if (!authToken) return
 
     setSubmitting(true)
     try {
       const res = await fetch("/api/user", {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(editForm),
@@ -84,8 +85,9 @@ const Profile = () => {
       const data = await res.json()
       if (data.success) {
         showToast("用户信息更新成功", "success")
-        setUser(data.data)
-        localStorage.setItem("user", JSON.stringify(data.data))
+        const updatedUser = { ...data.data }
+        setUser(updatedUser)
+        login(updatedUser, authToken)
         setActiveTab("info")
       } else {
         showToast(data.message || "更新失败", "error")
@@ -100,8 +102,7 @@ const Profile = () => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const token = localStorage.getItem("token")
-    if (!token) return
+    if (!authToken) return
 
     if (passwordForm.new_password !== passwordForm.confirm_password) {
       showToast("两次输入的密码不一致", "error")
@@ -118,7 +119,7 @@ const Profile = () => {
       const res = await fetch("/api/user/password", {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${authToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -242,17 +243,7 @@ const Profile = () => {
       {activeTab === "info" && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center gap-6 mb-6">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.username}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-4xl">👤</span>
-              )}
-            </div>
+            <UserAvatar key={`profile-avatar-${user.id}-${user.username}-${user.avatar_url || 'none'}`} user={user} size="xl" />
             <div>
               <h2 className="text-2xl font-bold text-gray-800">{user.username}</h2>
               <p className="text-gray-600">{user.email}</p>

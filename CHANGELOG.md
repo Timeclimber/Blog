@@ -1,5 +1,34 @@
 # 版本更新记录
 
+## 3.1.2 (2026-04-17)
+
+### Bug 修复
+- **[重要] 修复导航栏头像不实时更新的问题**
+  - **问题现象**: 在个人中心修改用户信息（特别是头像 URL）后，右上角导航栏的头像不会实时更新，需要刷新页面才能看到变化
+  - **根本原因**: React 组件的 key 属性不够具体，导致组件复用时无法正确响应数据变化
+  
+  - **解决方案 - 三层保障机制**:
+    1. **外层 key（组件级别）**: 给 UserAvatar 组件添加包含 `id`、`username`、`avatar_url` 的复合 key，确保用户信息任何变化都会触发组件完全重新创建
+    2. **内层 key（图片级别）**: 给 img 标签添加 `key={user.avatar_url}`，确保头像 URL 变化时强制重新加载新图片
+    3. **状态重置机制**: UserAvatar 组件的 useEffect 监听用户信息变化，自动重置 imgError 状态
+
+- **优化 UserAvatar 组件的通用性**
+  - 支持所有用户的头像显示（管理员、普通用户）
+  - 有头像 URL 时显示自定义头像
+  - 无头像 URL 时显示用户名首字母彩色头像
+  - 支持 4 种尺寸：sm、md、lg、xl
+
+### 用户体验改进
+- **个人中心页面使用统一的 UserAvatar 组件**
+  - 替换原来的自定义头像显示逻辑
+  - 确保个人中心和导航栏使用相同的头像渲染方式
+  - 保持视觉一致性
+
+### 修改文件
+- `blog-next/src/components/UserAvatar.tsx` - 添加 img 标签 key，确保图片正确重新加载
+- `blog-next/src/components/Navbar.tsx` - 两处 UserAvatar 添加详细的复合 key
+- `blog-next/src/pages/Profile.tsx` - 使用 UserAvatar 组件替换自定义头像显示
+
 ## 3.1.1 (2026-04-17)
 
 ### 导航栏优化

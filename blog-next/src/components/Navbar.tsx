@@ -1,45 +1,23 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import UserAvatar from "./UserAvatar"
+import { useAuth } from "../contexts/AuthContext"
 
 const Navbar = () => {
   const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
-  const [token, setToken] = useState<string | null>(null)
+  const { user, token, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false)
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    const storedToken = localStorage.getItem("token")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
-    setToken(storedToken)
-  }, [])
-
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    localStorage.removeItem("token")
-    setUser(null)
-    setToken(null)
+    logout()
     setShowDropdown(false)
     navigate("/")
   }
 
-  const getInitial = (username: string) => {
-    return username ? username.charAt(0).toUpperCase() : "?"
-  }
-
-  const getRandomColor = (username: string) => {
-    const colors = [
-      "bg-gradient-to-br from-pink-500 to-rose-500",
-      "bg-gradient-to-br from-blue-500 to-indigo-500",
-      "bg-gradient-to-br from-green-500 to-emerald-500",
-      "bg-gradient-to-br from-yellow-500 to-orange-500",
-      "bg-gradient-to-br from-purple-500 to-violet-500",
-      "bg-gradient-to-br from-cyan-500 to-teal-500",
-    ]
-    const index = username ? username.charCodeAt(0) % colors.length : 0
-    return colors[index]
+  const handleSwitchUser = () => {
+    logout()
+    setShowDropdown(false)
+    navigate("/login")
   }
 
   return (
@@ -73,21 +51,7 @@ const Navbar = () => {
                     className="flex items-center space-x-3 px-3 py-2 hover:bg-gray-700 rounded-lg transition-all duration-200"
                   >
                     <div className="flex items-center space-x-2">
-                      {user.avatar_url ? (
-                        <img
-                          src={user.avatar_url}
-                          alt={user.username}
-                          className="w-8 h-8 rounded-full object-cover border-2 border-gray-600"
-                        />
-                      ) : (
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-gray-600 ${getRandomColor(
-                            user.username
-                          )}`}
-                        >
-                          {getInitial(user.username)}
-                        </div>
-                      )}
+                      <UserAvatar key={`nav-avatar-${user.id}-${user.username}-${user.avatar_url || 'none'}`} user={user} size="md" />
                       <span className="text-gray-200 hidden sm:inline">{user.username}</span>
                     </div>
                     <svg
@@ -111,22 +75,8 @@ const Navbar = () => {
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 py-2 animate-slide-in">
                         <div className="px-4 py-3 border-b border-gray-100">
                           <div className="flex items-center space-x-3">
-                            {user.avatar_url ? (
-                              <img
-                                src={user.avatar_url}
-                                alt={user.username}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div
-                                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${getRandomColor(
-                                  user.username
-                                )}`}
-                              >
-                                {getInitial(user.username)}
-                              </div>
-                            )}
-                            <div>
+                          <UserAvatar key={`dropdown-avatar-${user.id}-${user.username}-${user.avatar_url || 'none'}`} user={user} size="xl" />
+                          <div>
                               <div className="font-medium text-gray-800">{user.username}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                               <div
@@ -162,6 +112,26 @@ const Navbar = () => {
                           </svg>
                           <span>个人中心</span>
                         </Link>
+
+                        <button
+                          onClick={handleSwitchUser}
+                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 w-full transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span>切换用户</span>
+                        </button>
 
                         <div className="border-t border-gray-100 my-1"></div>
 

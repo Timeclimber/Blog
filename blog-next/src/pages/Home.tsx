@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
+import UserAvatar from "../components/UserAvatar"
 
 const Home = () => {
   const [articles, setArticles] = useState<any[]>([])
@@ -143,17 +144,7 @@ const Home = () => {
                   <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
                     {article.user && (
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                          {article.user.avatar_url ? (
-                            <img
-                              src={article.user.avatar_url}
-                              alt={article.user.username}
-                              className="w-full h-full object-cover rounded-full"
-                            />
-                          ) : (
-                            <span className="text-xs">👤</span>
-                          )}
-                        </div>
+                        <UserAvatar user={article.user} size="sm" />
                         <span>{article.user.username}</span>
                       </div>
                     )}

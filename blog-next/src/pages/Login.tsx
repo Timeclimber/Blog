@@ -1,11 +1,13 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "../contexts/AuthContext"
 
 const Login = () => {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,8 +21,7 @@ const Login = () => {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          localStorage.setItem("token", data.data.token)
-          localStorage.setItem("user", JSON.stringify(data.data.user))
+          login(data.data.user, data.data.token)
           navigate("/")
         } else {
           setError(data.message)
