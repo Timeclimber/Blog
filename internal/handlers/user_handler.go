@@ -134,10 +134,13 @@ func Login(c *gin.Context) {
 		"data": gin.H{
 			"token": tokenString,
 			"user": gin.H{
-				"id":       user.ID,
-				"username": user.Username,
-				"email":    user.Email,
-				"role":     user.Role,
+				"id":         user.ID,
+				"username":   user.Username,
+				"email":      user.Email,
+				"gender":     user.Gender,
+				"avatar_url": user.AvatarURL,
+				"role":       user.Role,
+				"created_at": user.CreatedAt,
 			},
 		},
 	})

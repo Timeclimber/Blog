@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
+import UserAvatar from "../components/UserAvatar"
 
 const Article = () => {
   const { id } = useParams<{ id: string }>()
@@ -213,17 +214,7 @@ const Article = () => {
             <div className="flex items-center gap-4 text-sm text-gray-500">
               {article.user && (
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                    {article.user.avatar_url ? (
-                      <img
-                        src={article.user.avatar_url}
-                        alt={article.user.username}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <span className="text-sm">👤</span>
-                    )}
-                  </div>
+                  <UserAvatar user={article.user} size="md" />
                   <span>{article.user.username}</span>
                 </div>
               )}
@@ -302,17 +293,7 @@ const Article = () => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      {comment.user?.avatar_url ? (
-                        <img
-                          src={comment.user.avatar_url}
-                          alt={comment.user.username}
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                      ) : (
-                        <span className="text-lg">👤</span>
-                      )}
-                    </div>
+                    <UserAvatar user={comment.user} size="lg" />
                     <div>
                       <div className="font-medium text-gray-800">
                         {comment.user?.username || "匿名用户"}
