@@ -10,12 +10,14 @@ import Message from "./pages/Message"
 import { ToastProvider } from "./components/Toast"
 import { ConfirmDialogProvider } from "./components/ConfirmDialog"
 import { AuthProvider } from "./contexts/AuthContext"
+import CursorEffect from "./components/CursorEffect"
 
 function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <ConfirmDialogProvider>
+          <CursorEffect />
           <Router>
             <Navbar />
             <div className="container mx-auto px-4 py-8">
