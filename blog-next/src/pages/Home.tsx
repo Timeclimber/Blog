@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
 import UserAvatar from "../components/UserAvatar"
+import { ArticleCardSkeleton } from "../components/Skeleton"
 
 const Home = () => {
   const [articles, setArticles] = useState<any[]>([])
@@ -28,6 +29,7 @@ const Home = () => {
       }
     } catch (err) {
       console.error(err)
+      showToast("加载文章失败", "error")
     } finally {
       setLoading(false)
     }
@@ -87,8 +89,23 @@ const Home = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">文章列表</h1>
+          {user && (
+            <Link
+              to="/new"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
+            >
+              写文章
+            </Link>
+          )}
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <ArticleCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }

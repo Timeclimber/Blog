@@ -1,22 +1,14 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 
 const CursorEffect = () => {
   const [position, setPosition] = useState({ x: -100, y: -100 })
   const [isClicking, setIsClicking] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
-  
-  const lastMoveTimeRef = useRef(0)
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      const now = Date.now()
-      
-      if (now - lastMoveTimeRef.current < 16) {
-        return
-      }
-      lastMoveTimeRef.current = now
-
+      // 直接更新位置，不做任何节流，确保最快速度响应
       setPosition({ x: e.clientX, y: e.clientY })
       setIsVisible(true)
 
@@ -48,20 +40,22 @@ const CursorEffect = () => {
 
   return (
     <div
-      className={`fixed pointer-events-none z-[9999] transition-all duration-100 ease-out ${
+      className={`fixed pointer-events-none z-[9999] ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       style={{
         left: position.x,
         top: position.y,
         transform: isClicking ? "scale(0.9)" : isHovering ? "scale(1.2)" : "scale(1)",
+        transition: "transform 0.05s ease-out, opacity 0.1s ease-out",
+        willChange: "transform, left, top",
       }}
     >
       <svg
         width="32"
         height="32"
         viewBox="0 0 32 32"
-        className="transition-all duration-150 ease-out"
+        style={{ willChange: "transform" }}
       >
         <defs>
           <linearGradient id="cursorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -81,7 +75,6 @@ const CursorEffect = () => {
           d="M4 4 L20 12 L14 14 L12 20 L4 4 Z"
           fill="url(#cursorGradient)"
           filter="url(#glow)"
-          className="transition-all duration-150"
         />
         
         <path
