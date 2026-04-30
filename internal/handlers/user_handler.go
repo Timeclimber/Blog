@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -13,8 +14,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// 密钥，实际生产环境中应该从环境变量获取
-var jwtSecret = []byte("your-secret-key")
+// jwtSecret JWT密钥，优先从环境变量获取，否则使用默认值
+var jwtSecret = func() []byte {
+	if secret := os.Getenv("JWT_SECRET"); secret != "" {
+		return []byte(secret)
+	}
+	return []byte("your-secret-key-change-in-production")
+}()
 
 // RegisterRequest 注册请求
 

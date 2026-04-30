@@ -53,12 +53,12 @@ func CreateArticle(c *gin.Context) {
 
 	// 获取完整的文章信息（包含用户信息）
 	updatedArticle, err := db.GetArticleByID(article.ID)
-	if err == nil {
-		c.JSON(http.StatusCreated, gin.H{"success": true, "data": updatedArticle})
+	if err != nil {
+		c.JSON(http.StatusCreated, gin.H{"success": true, "data": article})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"success": true, "data": article})
+	c.JSON(http.StatusCreated, gin.H{"success": true, "data": updatedArticle})
 }
 
 // GetArticle 获取文章详情
@@ -76,6 +76,9 @@ func GetArticle(c *gin.Context) {
 		return
 	}
 
+	// 增加浏览量（异步，不阻塞响应）
+	go db.IncrementArticleViews(id)
+
 	comments, err := db.GetCommentsByArticleID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取评论失败"})
@@ -88,12 +91,39 @@ func GetArticle(c *gin.Context) {
 		return
 	}
 
+	// 获取点赞数
+	likeCount, _ := db.GetLikeCount(id)
+
+	// 检查当前用户是否点赞（如果已登录）
+	isLiked := false
+	user, exists := c.Get("user")
+	if exists {
+		userMap, ok := user.(gin.H)
+		if ok {
+			var userID int
+			switch v := userMap["id"].(type) {
+			case int:
+				userID = v
+			case float64:
+				userID = int(v)
+			case int64:
+				userID = int(v)
+			}
+
+			if userID > 0 {
+				isLiked, _ = db.HasLiked(id, userID)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"article":  article,
-			"comments": comments,
-			"tags":     tags,
+			"article":    article,
+			"comments":   comments,
+			"tags":       tags,
+			"like_count": likeCount,
+			"is_liked":   isLiked,
 		},
 	})
 }

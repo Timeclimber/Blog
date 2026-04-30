@@ -73,8 +73,7 @@ func LikeArticle(c *gin.Context) {
 	// 获取最新点赞数
 	likeCount, err := db.GetLikeCount(articleID)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "点赞成功"})
-		return
+		likeCount = 0
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -144,8 +143,7 @@ func UnlikeArticle(c *gin.Context) {
 	// 获取最新点赞数
 	likeCount, err := db.GetLikeCount(articleID)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"success": true, "message": "取消点赞成功"})
-		return
+		likeCount = 0
 	}
 
 	c.JSON(http.StatusOK, gin.H{

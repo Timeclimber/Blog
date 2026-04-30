@@ -488,10 +488,17 @@ func AddTagToArticle(articleID, tagID int) error {
 // 留言板相关操作
 
 // CreateMessage 创建留言
-func CreateMessage(userID int, name, content string) error {
+func CreateMessage(userID int, name, content string) (int, error) {
 	query := `INSERT INTO messages (user_id, name, content, created_at) VALUES (?, ?, ?, ?)`
-	_, err := DB.Exec(query, userID, name, content, time.Now())
-	return err
+	result, err := DB.Exec(query, userID, name, content, time.Now())
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
 }
 
 // GetMessageByID 根据ID获取留言

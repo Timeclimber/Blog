@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import UserAvatar from "../components/UserAvatar"
@@ -10,45 +10,79 @@ const UserProfile = () => {
   const [articles, setArticles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { showToast } = useToast()
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  useEffect(() => {
-    if (id) {
-      loadUserProfile(parseInt(id))
+  const loadUserProfile = useCallback(async (userId: number) => {
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
     }
-  }, [id])
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
-  const loadUserProfile = async (userId: number) => {
     setLoading(true)
     try {
       // 获取用户信息
-      const userRes = await fetch(`/api/users/${userId}`)
+      const userRes = await fetch(`/api/users/${userId}`, {
+        signal: controller.signal,
+      })
       const userData = await userRes.json()
-      if (userData.success) {
-        setUser(userData.data)
-      } else {
-        showToast(userData.message || "获取用户信息失败", "error")
+      if (!controller.signal.aborted) {
+        if (userData.success) {
+          setUser(userData.data)
+        } else {
+          showToast(userData.message || "获取用户信息失败", "error")
+        }
       }
 
       // 获取用户文章
-      const articlesRes = await fetch(`/api/users/${userId}/articles`)
+      const articlesRes = await fetch(`/api/users/${userId}/articles`, {
+        signal: controller.signal,
+      })
       const articlesData = await articlesRes.json()
-      if (articlesData.success) {
-        setArticles(articlesData.data || [])
+      if (!controller.signal.aborted) {
+        if (articlesData.success) {
+          setArticles(articlesData.data || [])
+        }
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return
+      }
       console.error(err)
       showToast("加载用户资料失败", "error")
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
     }
-  }
+  }, [showToast])
+
+  useEffect(() => {
+    if (id) {
+      const userId = parseInt(id)
+      if (!isNaN(userId)) {
+        loadUserProfile(userId)
+      }
+    }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [id, loadUserProfile])
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
+    try {
+      return new Date(dateStr).toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    } catch {
+      return dateStr
+    }
   }
 
   if (loading) {

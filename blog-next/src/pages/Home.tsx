@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
@@ -13,29 +13,57 @@ const Home = () => {
   const [isSearching, setIsSearching] = useState(false)
   const { showToast } = useToast()
   const { showConfirm } = useConfirm()
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const loadArticles = useCallback(async () => {
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    setLoading(true)
+    try {
+      const res = await fetch("/api/articles", {
+        signal: controller.signal,
+      })
+      const data = await res.json()
+      if (!controller.signal.aborted) {
+        if (data.success) {
+          setArticles(data.data || [])
+        }
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return
+      }
+      console.error(err)
+      showToast("加载文章失败", "error")
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
+    }
+  }, [showToast])
 
   useEffect(() => {
     loadArticles()
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
-  }, [])
-
-  const loadArticles = async () => {
-    try {
-      const res = await fetch("/api/articles")
-      const data = await res.json()
-      if (data.success) {
-        setArticles(data.data || [])
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch {
+        setUser(null)
       }
-    } catch (err) {
-      console.error(err)
-      showToast("加载文章失败", "error")
-    } finally {
-      setLoading(false)
     }
-  }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [loadArticles])
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,25 +72,41 @@ const Home = () => {
       return
     }
 
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     setIsSearching(true)
     setLoading(true)
     try {
-      const res = await fetch(`/api/articles/search?keyword=${encodeURIComponent(searchKeyword)}`)
+      const res = await fetch(`/api/articles/search?keyword=${encodeURIComponent(searchKeyword)}`, {
+        signal: controller.signal,
+      })
       const data = await res.json()
-      if (data.success) {
-        setArticles(data.data || [])
-        if (data.data.length === 0) {
-          showToast("未找到相关文章", "info")
+      if (!controller.signal.aborted) {
+        if (data.success) {
+          setArticles(data.data || [])
+          if (data.data.length === 0) {
+            showToast("未找到相关文章", "info")
+          }
+        } else {
+          showToast(data.message || "搜索失败", "error")
         }
-      } else {
-        showToast(data.message || "搜索失败", "error")
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return
+      }
       console.error(err)
       showToast("搜索失败", "error")
     } finally {
-      setLoading(false)
-      setIsSearching(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+        setIsSearching(false)
+      }
     }
   }
 
@@ -114,13 +158,17 @@ const Home = () => {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+    try {
+      return new Date(dateStr).toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch {
+      return dateStr
+    }
   }
 
   if (loading) {

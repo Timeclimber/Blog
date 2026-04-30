@@ -1,42 +1,59 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 
 const CursorEffect = () => {
   const [position, setPosition] = useState({ x: -100, y: -100 })
   const [isClicking, setIsClicking] = useState(false)
   const [isHovering, setIsHovering] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const rafRef = useRef<number | null>(null)
+  const mousePosRef = useRef({ x: -100, y: -100 })
+  const isHoveringRef = useRef(false)
+
+  const updatePosition = useCallback(() => {
+    setPosition(mousePosRef.current)
+    setIsHovering(isHoveringRef.current)
+    rafRef.current = null
+  }, [])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // 直接更新位置，不做任何节流，确保最快速度响应
-      setPosition({ x: e.clientX, y: e.clientY })
+      mousePosRef.current = { x: e.clientX, y: e.clientY }
       setIsVisible(true)
 
       const target = e.target as HTMLElement
-      if (target.tagName === 'A' || target.tagName === 'BUTTON' || 
-          target.closest('a') || target.closest('button')) {
-        setIsHovering(true)
-      } else {
-        setIsHovering(false)
+      const isInteractive = target.tagName === 'A' || target.tagName === 'BUTTON' || 
+          target.closest('a') || target.closest('button') ||
+          target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' ||
+          target.closest('input') || target.closest('textarea')
+      isHoveringRef.current = !!isInteractive
+
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(updatePosition)
       }
     }
 
     const handleMouseDown = () => setIsClicking(true)
     const handleMouseUp = () => setIsClicking(false)
     const handleMouseLeave = () => setIsVisible(false)
+    const handleMouseEnter = () => setIsVisible(true)
 
-    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove, { passive: true })
     window.addEventListener("mousedown", handleMouseDown)
     window.addEventListener("mouseup", handleMouseUp)
-    window.addEventListener("mouseleave", handleMouseLeave)
+    document.body.addEventListener("mouseleave", handleMouseLeave)
+    document.body.addEventListener("mouseenter", handleMouseEnter)
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mousedown", handleMouseDown)
       window.removeEventListener("mouseup", handleMouseUp)
-      window.removeEventListener("mouseleave", handleMouseLeave)
+      document.body.removeEventListener("mouseleave", handleMouseLeave)
+      document.body.removeEventListener("mouseenter", handleMouseEnter)
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
     }
-  }, [])
+  }, [updatePosition])
 
   return (
     <div

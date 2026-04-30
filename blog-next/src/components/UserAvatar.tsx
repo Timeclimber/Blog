@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react"
 
+interface User {
+  id?: number
+  username?: string
+  avatar_url?: string
+}
+
 interface UserAvatarProps {
-  user?: {
-    username?: string
-    avatar_url?: string
-  } | null
+  user?: User | null
   size?: "sm" | "md" | "lg" | "xl"
   className?: string
 }
@@ -23,14 +26,14 @@ const UserAvatar = ({ user, size = "md", className = "" }: UserAvatarProps) => {
     xl: "w-12 h-12 text-xl",
   }
 
-  const getInitial = (username: string) => {
+  const getInitial = (username?: string) => {
     if (!username || username.trim() === "") {
       return "?"
     }
     return username.charAt(0).toUpperCase()
   }
 
-  const getRandomColor = (username: string) => {
+  const getRandomColor = (username?: string) => {
     const colors = [
       "bg-gradient-to-br from-pink-500 to-rose-500",
       "bg-gradient-to-br from-blue-500 to-indigo-500",
@@ -63,10 +66,10 @@ const UserAvatar = ({ user, size = "md", className = "" }: UserAvatarProps) => {
   return (
     <div
       className={`${sizeClasses[size]} rounded-full flex items-center justify-center text-white font-bold border-2 border-gray-600 ${getRandomColor(
-        user?.username || ""
+        user?.username
       )} ${className}`}
     >
-      {getInitial(user?.username || "")}
+      {getInitial(user?.username)}
     </div>
   )
 }

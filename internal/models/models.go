@@ -42,8 +42,9 @@ type Comment struct {
 
 // Tag 标签模型
 type Tag struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // ArticleTag 文章标签关联模型

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useParams, useNavigate, Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
 import UserAvatar from "../components/UserAvatar"
@@ -12,32 +12,105 @@ const Article = () => {
   const [user, setUser] = useState<any>(null)
   const [commentContent, setCommentContent] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [liking, setLiking] = useState(false)
   const { showToast } = useToast()
   const { showConfirm } = useConfirm()
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const loadArticle = useCallback(async () => {
+    if (!id) return
+
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/articles/detail/${id}`, {
+        signal: controller.signal,
+      })
+      const result = await res.json()
+      if (!controller.signal.aborted) {
+        if (result.success) {
+          setData(result.data)
+        } else {
+          showToast(result.message || "加载失败", "error")
+        }
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return
+      }
+      console.error(err)
+      showToast("加载失败", "error")
+    } finally {
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
+    }
+  }, [id, showToast])
 
   useEffect(() => {
     loadArticle()
     const storedUser = localStorage.getItem("user")
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch {
+        setUser(null)
+      }
     }
-  }, [id])
 
-  const loadArticle = async () => {
-    if (!id) return
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [loadArticle])
+
+  const handleLike = async () => {
+    if (!user) {
+      showToast("请先登录", "error")
+      navigate("/login")
+      return
+    }
+
+    if (!data?.article) return
+
+    setLiking(true)
     try {
-      const res = await fetch(`/api/articles/detail/${id}`)
+      const token = localStorage.getItem("token")
+      if (!token) {
+        showToast("请先登录", "error")
+        return
+      }
+
+      const method = data.is_liked ? "DELETE" : "POST"
+      const res = await fetch(`/api/articles/${id}/like`, {
+        method,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
       const result = await res.json()
       if (result.success) {
-        setData(result.data)
+        setData((prev: any) => ({
+          ...prev,
+          like_count: result.data.like_count,
+          is_liked: result.data.is_liked,
+        }))
+        showToast(data.is_liked ? "取消点赞成功" : "点赞成功", "success")
       } else {
-        showToast(result.message || "加载失败", "error")
+        showToast(result.message || "操作失败", "error")
       }
     } catch (err) {
       console.error(err)
-      showToast("加载失败", "error")
+      showToast("操作失败", "error")
     } finally {
-      setLoading(false)
+      setLiking(false)
     }
   }
 
@@ -171,13 +244,17 @@ const Article = () => {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
+    try {
+      return new Date(dateStr).toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch {
+      return dateStr
+    }
   }
 
   if (loading) {
@@ -203,7 +280,7 @@ const Article = () => {
     )
   }
 
-  const { article, comments = [] } = data
+  const { article, comments = [], like_count = 0, is_liked = false } = data
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -215,11 +292,28 @@ const Article = () => {
               {article.user && (
                 <div className="flex items-center gap-2">
                   <UserAvatar user={article.user} size="md" />
-                  <span>{article.user.username}</span>
+                  <Link 
+                    to={`/user/${article.user_id}`}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    {article.user.username}
+                  </Link>
                 </div>
               )}
               <span>•</span>
               <span>{formatDate(article.created_at)}</span>
+              {article.views > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {article.views}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           {canDeleteArticle() && (
@@ -242,6 +336,34 @@ const Article = () => {
 
         <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap">
           {article.content}
+        </div>
+
+        {/* 点赞按钮 */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <button
+            onClick={handleLike}
+            disabled={liking}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 ${
+              is_liked
+                ? "bg-red-50 text-red-600 hover:bg-red-100"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            <svg
+              className={`w-6 h-6 transition-all duration-200 ${is_liked ? "scale-110" : ""}`}
+              fill={is_liked ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span>{liking ? "处理中..." : `${like_count} 点赞`}</span>
+          </button>
         </div>
       </article>
 

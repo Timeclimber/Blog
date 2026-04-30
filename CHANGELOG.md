@@ -1,5 +1,60 @@
 # 版本更新记录
 
+## 3.1.6 (2026-04-30)
+
+### Bug 修复（后端）
+- **article_handler.go**：修复创建文章后获取完整信息时的错误处理逻辑，避免在获取失败时返回不一致的数据
+- **like_handler.go**：修复点赞/取消点赞时获取点赞数失败的响应格式，确保始终返回包含 `like_count` 和 `is_liked` 的完整数据
+- **tag_handler.go**：统一所有标签 API 的响应格式为 `{success, message, data}`，与其他 handler 保持一致
+- **message_handler.go**：修复创建留言后查找新留言的逻辑，改为通过 `LastInsertId` 精确获取，避免并发时找到错误的留言
+- **comment_handler.go**：修复创建评论后返回数据的逻辑，改为通过 `GetCommentByID` 精确获取新评论
+- **user_handler.go**：JWT 密钥改为优先从环境变量 `JWT_SECRET` 获取，提升安全性
+
+### Bug 修复（前端）
+- **Article.tsx**：
+  - 使用 `AbortController` 取消未完成的请求，防止竞态条件和内存泄漏
+  - 使用 `useCallback` 缓存 `loadArticle` 函数
+  - 添加 JSON 解析错误处理
+  - 添加日期格式化错误处理
+- **UserProfile.tsx**：
+  - 使用 `AbortController` 取消未完成的请求
+  - 使用 `useCallback` 缓存 `loadUserProfile` 函数
+  - 添加 `parseInt` 的 NaN 检查
+  - 添加日期格式化错误处理
+- **Home.tsx**：
+  - 使用 `AbortController` 取消未完成的请求（包括搜索请求）
+  - 使用 `useCallback` 缓存 `loadArticles` 函数
+  - 添加 JSON 解析错误处理
+  - 添加日期格式化错误处理
+- **CursorEffect.tsx**：
+  - 使用 `requestAnimationFrame` 节流鼠标移动事件，大幅提升性能
+  - 使用 `useRef` 存储鼠标位置和悬停状态，避免不必要的重渲染
+  - 添加 `mouseenter` 事件监听，修复鼠标重新进入页面时的显示问题
+  - 扩展交互元素检测，支持 input 和 textarea
+- **UserAvatar.tsx**：
+  - 添加明确的 `User` 接口定义，替代内联类型
+  - 将 `user` 属性类型改为 `User | null`，避免 undefined 问题
+- **Profile.tsx**：移除未使用的 `authUser` 变量
+
+### 其他修复
+- **models.go**：为 `Tag` 模型添加 `CreatedAt` 字段，修复数据库查询时的编译错误
+
+### 修改文件
+- `internal/handlers/article_handler.go`
+- `internal/handlers/like_handler.go`
+- `internal/handlers/tag_handler.go`
+- `internal/handlers/message_handler.go`
+- `internal/handlers/comment_handler.go`
+- `internal/handlers/user_handler.go`
+- `internal/models/models.go`
+- `internal/db/operations.go`
+- `blog-next/src/pages/Article.tsx`
+- `blog-next/src/pages/UserProfile.tsx`
+- `blog-next/src/pages/Home.tsx`
+- `blog-next/src/pages/Profile.tsx`
+- `blog-next/src/components/CursorEffect.tsx`
+- `blog-next/src/components/UserAvatar.tsx`
+
 ## 3.1.5 (2026-04-30)
 
 ### 文档更新

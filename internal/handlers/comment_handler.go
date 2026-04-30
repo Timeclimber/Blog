@@ -51,14 +51,14 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	// 获取完整的评论信息（包含用户信息）
-	updatedComment, err := db.GetCommentsByArticleID(comment.ArticleID)
-	if err == nil && len(updatedComment) > 0 {
-		c.JSON(http.StatusCreated, gin.H{"success": true, "data": updatedComment[0]})
+	// 获取刚创建的评论完整信息
+	newComment, err := db.GetCommentByID(comment.ID)
+	if err != nil {
+		c.JSON(http.StatusCreated, gin.H{"success": true, "data": comment})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"success": true, "data": comment})
+	c.JSON(http.StatusCreated, gin.H{"success": true, "data": newComment})
 }
 
 // GetCommentsByArticleID 根据文章ID获取评论

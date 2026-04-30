@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"blog/internal/db"
-	"blog/internal/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,33 +61,20 @@ func CreateMessage(c *gin.Context) {
 	}
 
 	// 创建留言
-	err := db.CreateMessage(userID, req.Name, req.Content)
+	messageID, err := db.CreateMessage(userID, req.Name, req.Content)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "创建留言失败"})
 		return
 	}
 
-	// 获取完整的留言信息（包含用户信息）
-	messages, err := db.GetAllMessages()
+	// 获取刚创建的留言完整信息
+	newMessage, err := db.GetMessageByID(messageID)
 	if err != nil {
 		c.JSON(http.StatusCreated, gin.H{"success": true, "message": "留言创建成功"})
 		return
 	}
 
-	// 找到刚创建的留言
-	var newMessage *models.Message
-	for _, msg := range messages {
-		if msg.Name == req.Name && msg.Content == req.Content {
-			newMessage = msg
-			break
-		}
-	}
-
-	if newMessage != nil {
-		c.JSON(http.StatusCreated, gin.H{"success": true, "data": newMessage})
-	} else {
-		c.JSON(http.StatusCreated, gin.H{"success": true, "message": "留言创建成功"})
-	}
+	c.JSON(http.StatusCreated, gin.H{"success": true, "data": newMessage})
 }
 
 // DeleteMessage 删除留言
