@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -246,7 +245,7 @@ func UpdateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 检查用户名是否被其他用户使用
+	// 检查用户名是否被其他用户占用
 	existingUser, err := db.GetUserByUsername(req.Username)
 	if err == nil && existingUser.ID != currentUser.ID {
 		c.JSON(http.StatusConflict, gin.H{"success": false, "message": "用户名已被占用"})

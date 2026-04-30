@@ -1,5 +1,24 @@
 # 版本更新记录
 
+## 3.1.4 (2026-04-30)
+
+### Bug 修复
+- **[重要] 修复后端编译错误**
+  - 移除了未使用的 `log` 导入
+  - 修复了 `ShouldBindJSON` 缺少取地址符号的问题
+  - 添加了 `github.com/gin-contrib/cors` 依赖包
+
+### 后端优化
+- **CORS配置**：添加了CORS中间件，支持多端口访问（5173-5178）
+- **API格式统一**：所有API返回格式统一为 `{success, message, data}`
+- **清理代码**：移除了所有调试日志，保持生产环境代码整洁
+
+### 修改文件
+- `internal/handlers/user_handler.go` - 统一API格式，移除调试日志，修复编译错误
+- `cmd/web/main.go` - 添加CORS中间件
+- `go.mod` - 添加gin-contrib/cors依赖
+- `go.sum` - 依赖锁文件
+
 ## 3.1.3 (2026-04-18)
 
 ### 新增功能
