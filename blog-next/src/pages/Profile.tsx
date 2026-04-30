@@ -32,7 +32,7 @@ const Profile = () => {
   })
   const [submitting, setSubmitting] = useState(false)
   const { showToast } = useToast()
-  const { user: authUser, token: authToken, login } = useAuth()
+  const { token: authToken, login } = useAuth()
 
   useEffect(() => {
     loadUser()

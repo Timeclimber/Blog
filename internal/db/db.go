@@ -68,6 +68,8 @@ func createTables() error {
 		title TEXT NOT NULL,
 		content TEXT NOT NULL,
 		user_id INTEGER NOT NULL DEFAULT 1,
+		status TEXT NOT NULL DEFAULT 'published',
+		views INTEGER NOT NULL DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
@@ -78,6 +80,18 @@ func createTables() error {
 
 	// 添加 user_id 字段（如果表已存在）
 	_, err = DB.Exec(`ALTER TABLE articles ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
+	}
+
+	// 添加 status 字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE articles ADD COLUMN status TEXT NOT NULL DEFAULT 'published'`)
+	if err != nil {
+		// 字段可能已存在，忽略错误
+	}
+
+	// 添加 views 字段（如果表已存在）
+	_, err = DB.Exec(`ALTER TABLE articles ADD COLUMN views INTEGER NOT NULL DEFAULT 0`)
 	if err != nil {
 		// 字段可能已存在，忽略错误
 	}
@@ -144,6 +158,22 @@ func createTables() error {
 		// 字段可能已存在，忽略错误
 	}
 
+	// 创建点赞表
+	_, err = DB.Exec(`
+	CREATE TABLE IF NOT EXISTS likes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		article_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(article_id, user_id),
+		FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	)
+	`)
+	if err != nil {
+		return err
+	}
+
 	// 创建索引
 	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_comments_article_id ON comments(article_id)`)
 	if err != nil {
@@ -151,6 +181,26 @@ func createTables() error {
 	}
 
 	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_articles_user_id ON articles(user_id)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_likes_article_id ON likes(article_id)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id)`)
 	if err != nil {
 		return err
 	}

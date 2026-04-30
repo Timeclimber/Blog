@@ -8,6 +8,10 @@ type Article struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	UserID    int       `json:"user_id"`
+	Status    string    `json:"status"` // published 或 draft
+	Views     int       `json:"views"`
+	LikeCount int       `json:"like_count"`
+	IsLiked   bool      `json:"is_liked"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	User      *User     `json:"user,omitempty"`
@@ -33,12 +37,14 @@ type Comment struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	User      *User     `json:"user,omitempty"`
+	Article   *Article  `json:"article,omitempty"`
 }
 
 // Tag 标签模型
 type Tag struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // ArticleTag 文章标签关联模型
@@ -55,4 +61,12 @@ type Message struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	User      *User     `json:"user,omitempty"`
+}
+
+// Like 点赞模型
+type Like struct {
+	ID        int       `json:"id"`
+	ArticleID int       `json:"article_id"`
+	UserID    int       `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
 }

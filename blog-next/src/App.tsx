@@ -6,6 +6,7 @@ import Register from "./pages/Register"
 import NewArticle from "./pages/NewArticle"
 import Article from "./pages/Article"
 import Profile from "./pages/Profile"
+import UserProfile from "./pages/UserProfile"
 import Message from "./pages/Message"
 import { ToastProvider } from "./components/Toast"
 import { ConfirmDialogProvider } from "./components/ConfirmDialog"
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/new" element={<NewArticle />} />
                 <Route path="/article/:id" element={<Article />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/user/:id" element={<UserProfile />} />
                 <Route path="/message" element={<Message />} />
               </Routes>
             </div>
