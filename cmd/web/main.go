@@ -24,7 +24,7 @@ func main() {
 
 	// 配置CORS中间件
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:5177", "http://localhost:5178"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -45,6 +45,7 @@ func main() {
 
 		// 文章相关路由
 		api.GET("/articles", handlers.GetAllArticles)
+		api.GET("/articles/search", handlers.SearchArticles)
 		api.POST("/articles", handlers.AuthMiddleware(), handlers.CreateArticle)
 		api.GET("/articles/detail/:id", handlers.GetArticle)
 		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.UpdateArticle)
@@ -64,6 +65,15 @@ func main() {
 		// 留言板相关路由
 		api.POST("/messages", handlers.AuthMiddleware(), handlers.CreateMessage)
 		api.DELETE("/messages/:id", handlers.AuthMiddleware(), handlers.DeleteMessage)
+
+		// 点赞相关路由
+		api.POST("/articles/:id/like", handlers.AuthMiddleware(), handlers.LikeArticle)
+		api.DELETE("/articles/:id/like", handlers.AuthMiddleware(), handlers.UnlikeArticle)
+		api.GET("/articles/:id/likes", handlers.GetArticleLikes)
+
+		// 用户主页路由
+		api.GET("/users/:id/articles", handlers.GetUserArticles)
+		api.GET("/users/:id", handlers.GetUserProfile)
 	}
 
 	// 启动服务器

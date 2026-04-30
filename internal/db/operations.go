@@ -10,8 +10,8 @@ import (
 
 // CreateArticle 创建文章
 func CreateArticle(article *models.Article) error {
-	query := `INSERT INTO articles (title, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
-	result, err := DB.Exec(query, article.Title, article.Content, article.UserID, time.Now(), time.Now())
+	query := `INSERT INTO articles (title, content, user_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
+	result, err := DB.Exec(query, article.Title, article.Content, article.UserID, article.Status, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func CreateArticle(article *models.Article) error {
 // GetArticleByID 根据ID获取文章
 func GetArticleByID(id int) (*models.Article, error) {
 	query := `
-	SELECT a.id, a.title, a.content, a.user_id, a.created_at, a.updated_at,
+	SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
 	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
 	FROM articles a
 	LEFT JOIN users u ON a.user_id = u.id
@@ -39,7 +39,7 @@ func GetArticleByID(id int) (*models.Article, error) {
 	article := &models.Article{}
 	user := &models.User{}
 	err := row.Scan(
-		&article.ID, &article.Title, &article.Content, &article.UserID, &article.CreatedAt, &article.UpdatedAt,
+		&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
 		&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
 	)
 	if err != nil {
@@ -49,13 +49,14 @@ func GetArticleByID(id int) (*models.Article, error) {
 	return article, nil
 }
 
-// GetAllArticles 获取所有文章
+// GetAllArticles 获取所有已发布文章
 func GetAllArticles() ([]*models.Article, error) {
 	query := `
-	SELECT a.id, a.title, a.content, a.user_id, a.created_at, a.updated_at,
+	SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
 	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
 	FROM articles a
 	LEFT JOIN users u ON a.user_id = u.id
+	WHERE a.status = 'published'
 	ORDER BY a.created_at DESC
 	`
 	rows, err := DB.Query(query)
@@ -69,7 +70,7 @@ func GetAllArticles() ([]*models.Article, error) {
 		article := &models.Article{}
 		user := &models.User{}
 		err := rows.Scan(
-			&article.ID, &article.Title, &article.Content, &article.UserID, &article.CreatedAt, &article.UpdatedAt,
+			&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
 			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
 		)
 		if err != nil {
@@ -86,10 +87,94 @@ func GetAllArticles() ([]*models.Article, error) {
 	return articles, nil
 }
 
+// GetArticlesByUserID 获取用户的所有文章
+func GetArticlesByUserID(userID int) ([]*models.Article, error) {
+	query := `
+	SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM articles a
+	LEFT JOIN users u ON a.user_id = u.id
+	WHERE a.user_id = ? AND a.status = 'published'
+	ORDER BY a.created_at DESC
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	articles := []*models.Article{}
+	for rows.Next() {
+		article := &models.Article{}
+		user := &models.User{}
+		err := rows.Scan(
+			&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		article.User = user
+		articles = append(articles, article)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}
+
+// SearchArticles 搜索文章
+func SearchArticles(keyword string) ([]*models.Article, error) {
+	query := `
+	SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
+	       u.id, u.username, u.email, u.gender, u.avatar_url, u.role, u.created_at
+	FROM articles a
+	LEFT JOIN users u ON a.user_id = u.id
+	WHERE a.status = 'published' AND (a.title LIKE ? OR a.content LIKE ?)
+	ORDER BY a.created_at DESC
+	`
+	searchPattern := "%" + keyword + "%"
+	rows, err := DB.Query(query, searchPattern, searchPattern)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	articles := []*models.Article{}
+	for rows.Next() {
+		article := &models.Article{}
+		user := &models.User{}
+		err := rows.Scan(
+			&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
+			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		article.User = user
+		articles = append(articles, article)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}
+
+// IncrementArticleViews 增加文章浏览量
+func IncrementArticleViews(id int) error {
+	query := `UPDATE articles SET views = views + 1 WHERE id = ?`
+	_, err := DB.Exec(query, id)
+	return err
+}
+
 // UpdateArticle 更新文章
 func UpdateArticle(article *models.Article) error {
-	query := `UPDATE articles SET title = ?, content = ?, updated_at = ? WHERE id = ?`
-	_, err := DB.Exec(query, article.Title, article.Content, time.Now(), article.ID)
+	query := `UPDATE articles SET title = ?, content = ?, status = ?, updated_at = ? WHERE id = ?`
+	_, err := DB.Exec(query, article.Title, article.Content, article.Status, time.Now(), article.ID)
 	return err
 }
 
@@ -475,4 +560,46 @@ func DeleteMessage(id int) error {
 	query := `DELETE FROM messages WHERE id = ?`
 	_, err := DB.Exec(query, id)
 	return err
+}
+
+// 点赞相关操作
+
+// CreateLike 创建点赞
+func CreateLike(articleID, userID int) error {
+	query := `INSERT INTO likes (article_id, user_id, created_at) VALUES (?, ?, ?)`
+	_, err := DB.Exec(query, articleID, userID, time.Now())
+	return err
+}
+
+// DeleteLike 取消点赞
+func DeleteLike(articleID, userID int) error {
+	query := `DELETE FROM likes WHERE article_id = ? AND user_id = ?`
+	_, err := DB.Exec(query, articleID, userID)
+	return err
+}
+
+// GetLikeCount 获取文章点赞数
+func GetLikeCount(articleID int) (int, error) {
+	query := `SELECT COUNT(*) FROM likes WHERE article_id = ?`
+	row := DB.QueryRow(query, articleID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// HasLiked 检查用户是否已点赞
+func HasLiked(articleID, userID int) (bool, error) {
+	query := `SELECT COUNT(*) FROM likes WHERE article_id = ? AND user_id = ?`
+	row := DB.QueryRow(query, articleID, userID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
