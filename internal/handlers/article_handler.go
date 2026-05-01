@@ -116,14 +116,40 @@ func GetArticle(c *gin.Context) {
 		}
 	}
 
+	// 获取收藏数
+	bookmarkCount, _ := db.GetBookmarkCount(id)
+
+	// 检查当前用户是否收藏（如果已登录）
+	isBookmarked := false
+	if exists {
+		userMap, ok := user.(gin.H)
+		if ok {
+			var userID int
+			switch v := userMap["id"].(type) {
+			case int:
+				userID = v
+			case float64:
+				userID = int(v)
+			case int64:
+				userID = int(v)
+			}
+
+			if userID > 0 {
+				isBookmarked, _ = db.HasBookmarked(id, userID)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"article":    article,
-			"comments":   comments,
-			"tags":       tags,
-			"like_count": likeCount,
-			"is_liked":   isLiked,
+			"article":         article,
+			"comments":        comments,
+			"tags":            tags,
+			"like_count":      likeCount,
+			"is_liked":        isLiked,
+			"bookmark_count":  bookmarkCount,
+			"is_bookmarked":   isBookmarked,
 		},
 	})
 }

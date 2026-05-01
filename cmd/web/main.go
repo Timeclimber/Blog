@@ -71,6 +71,14 @@ func main() {
 		api.DELETE("/articles/:id/like", handlers.AuthMiddleware(), handlers.UnlikeArticle)
 		api.GET("/articles/:id/likes", handlers.GetArticleLikes)
 
+		// 收藏相关路由
+		api.POST("/articles/:id/bookmark", handlers.AuthMiddleware(), handlers.BookmarkArticle)
+		api.DELETE("/articles/:id/bookmark", handlers.AuthMiddleware(), handlers.UnbookmarkArticle)
+		api.GET("/users/:id/bookmarks", handlers.AuthMiddleware(), handlers.GetUserBookmarks)
+
+		// 图片上传路由
+		api.POST("/upload/image", handlers.AuthMiddleware(), handlers.UploadImage)
+
 		// 用户主页路由
 		api.GET("/users/:id/articles", handlers.GetUserArticles)
 		api.GET("/users/:id", handlers.GetUserProfile)

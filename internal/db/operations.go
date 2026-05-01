@@ -610,3 +610,87 @@ func HasLiked(articleID, userID int) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+// CreateBookmark 创建收藏
+func CreateBookmark(articleID, userID int) error {
+	query := `INSERT INTO bookmarks (article_id, user_id, created_at) VALUES (?, ?, ?)`
+	_, err := DB.Exec(query, articleID, userID, time.Now())
+	return err
+}
+
+// DeleteBookmark 取消收藏
+func DeleteBookmark(articleID, userID int) error {
+	query := `DELETE FROM bookmarks WHERE article_id = ? AND user_id = ?`
+	_, err := DB.Exec(query, articleID, userID)
+	return err
+}
+
+// GetBookmarkCount 获取文章收藏数
+func GetBookmarkCount(articleID int) (int, error) {
+	query := `SELECT COUNT(*) FROM bookmarks WHERE article_id = ?`
+	row := DB.QueryRow(query, articleID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// HasBookmarked 检查用户是否已收藏
+func HasBookmarked(articleID, userID int) (bool, error) {
+	query := `SELECT COUNT(*) FROM bookmarks WHERE article_id = ? AND user_id = ?`
+	row := DB.QueryRow(query, articleID, userID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// GetBookmarksByUserID 获取用户收藏的文章
+func GetBookmarksByUserID(userID int) ([]models.Article, error) {
+	query := `
+		SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
+			u.username
+		FROM bookmarks b
+		JOIN articles a ON b.article_id = a.id
+		JOIN users u ON a.user_id = u.id
+		WHERE b.user_id = ?
+		ORDER BY b.created_at DESC
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var articles []models.Article
+	for rows.Next() {
+		var article models.Article
+		var username string
+		err := rows.Scan(
+			&article.ID, &article.Title, &article.Content,
+			&article.UserID, &article.Status, &article.Views,
+			&article.CreatedAt, &article.UpdatedAt,
+			&username,
+		)
+		if err != nil {
+			return nil, err
+		}
+		article.User = &models.User{
+			ID:       article.UserID,
+			Username: username,
+		}
+		articles = append(articles, article)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}

@@ -205,6 +205,32 @@ func createTables() error {
 		return err
 	}
 
+	// 创建收藏表
+	_, err = DB.Exec(`
+	CREATE TABLE IF NOT EXISTS bookmarks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		article_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(article_id, user_id),
+		FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+	)
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_article_id ON bookmarks(article_id)`)
+	if err != nil {
+		return err
+	}
+
 	// 创建默认管理员用户（密码：admin123）
 	_, err = DB.Exec(`
 	INSERT OR REPLACE INTO users (id, username, password_hash, email, role, created_at) 

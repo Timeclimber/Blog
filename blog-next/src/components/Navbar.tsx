@@ -2,10 +2,12 @@ import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import UserAvatar from "./UserAvatar"
 import { useAuth } from "../contexts/AuthContext"
+import { useTheme } from "../contexts/ThemeContext"
 
 const Navbar = () => {
   const navigate = useNavigate()
   const { user, token, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [showDropdown, setShowDropdown] = useState(false)
 
   const handleLogout = () => {
@@ -21,14 +23,14 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-gray-800 text-white shadow-lg">
+    <nav className="bg-gray-800 dark:bg-gray-900 text-white shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="text-xl font-bold hover:text-gray-200 transition-colors">
             博客系统
           </Link>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <Link
               to="/"
               className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
@@ -44,6 +46,22 @@ const Navbar = () => {
                 >
                   写文章
                 </Link>
+
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-all duration-200"
+                  title={theme === "light" ? "切换暗色模式" : "切换亮色模式"}
+                >
+                  {theme === "light" ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.351 11a9 9 0 11-9-9 7.5 7.5 0 009 9z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  )}
+                </button>
 
                 <div className="relative">
                   <button

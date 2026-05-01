@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useConfirm } from "../components/ConfirmDialog"
 import UserAvatar from "../components/UserAvatar"
+import MarkdownRenderer from "../components/MarkdownRenderer"
 
 const Article = () => {
   const { id } = useParams<{ id: string }>()
@@ -13,6 +14,7 @@ const Article = () => {
   const [commentContent, setCommentContent] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
   const [liking, setLiking] = useState(false)
+  const [bookmarking, setBookmarking] = useState(false)
   const { showToast } = useToast()
   const { showConfirm } = useConfirm()
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -20,7 +22,6 @@ const Article = () => {
   const loadArticle = useCallback(async () => {
     if (!id) return
 
-    // 取消之前的请求
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -111,6 +112,70 @@ const Article = () => {
       showToast("操作失败", "error")
     } finally {
       setLiking(false)
+    }
+  }
+
+  const handleBookmark = async () => {
+    if (!user) {
+      showToast("请先登录", "error")
+      navigate("/login")
+      return
+    }
+
+    if (!data?.article) return
+
+    setBookmarking(true)
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        showToast("请先登录", "error")
+        return
+      }
+
+      const method = data.is_bookmarked ? "DELETE" : "POST"
+      const res = await fetch(`/api/articles/${id}/bookmark`, {
+        method,
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+      const result = await res.json()
+      if (result.success) {
+        setData((prev: any) => ({
+          ...prev,
+          bookmark_count: result.data.bookmark_count,
+          is_bookmarked: result.data.is_bookmarked,
+        }))
+        showToast(data.is_bookmarked ? "取消收藏成功" : "收藏成功", "success")
+      } else {
+        showToast(result.message || "操作失败", "error")
+      }
+    } catch (err) {
+      console.error(err)
+      showToast("操作失败", "error")
+    } finally {
+      setBookmarking(false)
+    }
+  }
+
+  const handleShare = async () => {
+    const url = window.location.href
+
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(url)
+        showToast("链接已复制到剪贴板", "success")
+      } catch {
+        showToast("复制失败", "error")
+      }
+    } else {
+      const textarea = document.createElement("textarea")
+      textarea.value = url
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand("copy")
+      document.body.removeChild(textarea)
+      showToast("链接已复制到剪贴板", "success")
     }
   }
 
@@ -269,7 +334,7 @@ const Article = () => {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">📭</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">文章不存在</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">文章不存在</h2>
         <button
           onClick={() => navigate("/")}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -280,19 +345,19 @@ const Article = () => {
     )
   }
 
-  const { article, comments = [], like_count = 0, is_liked = false } = data
+  const { article, comments = [], like_count = 0, is_liked = false, bookmark_count = 0, is_bookmarked = false } = data
 
   return (
     <div className="max-w-3xl mx-auto">
-      <article className="bg-white rounded-lg shadow-md p-8">
+      <article className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{article.title}</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{article.title}</h1>
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               {article.user && (
                 <div className="flex items-center gap-2">
                   <UserAvatar user={article.user} size="md" />
-                  <Link 
+                  <Link
                     to={`/user/${article.user_id}`}
                     className="hover:text-blue-600 transition-colors"
                   >
@@ -319,7 +384,7 @@ const Article = () => {
           {canDeleteArticle() && (
             <button
               onClick={handleDeleteArticle}
-              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200"
               title="删除文章"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -334,23 +399,21 @@ const Article = () => {
           )}
         </div>
 
-        <div className="prose prose-lg max-w-none text-gray-700 whitespace-pre-wrap">
-          {article.content}
-        </div>
+        <MarkdownRenderer content={article.content} />
 
-        {/* 点赞按钮 */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        {/* 操作按钮区 */}
+        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center gap-4 flex-wrap">
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 ${
               is_liked
-                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-red-50 dark:bg-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
           >
             <svg
-              className={`w-6 h-6 transition-all duration-200 ${is_liked ? "scale-110" : ""}`}
+              className={`w-5 h-5 transition-all duration-200 ${is_liked ? "scale-110" : ""}`}
               fill={is_liked ? "currentColor" : "none"}
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -362,19 +425,59 @@ const Article = () => {
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
-            <span>{liking ? "处理中..." : `${like_count} 点赞`}</span>
+            <span>{liking ? "处理中..." : `${like_count}`}</span>
+          </button>
+
+          <button
+            onClick={handleBookmark}
+            disabled={bookmarking}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 ${
+              is_bookmarked
+                ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/40"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
+          >
+            <svg
+              className={`w-5 h-5 transition-all duration-200 ${is_bookmarked ? "scale-110" : ""}`}
+              fill={is_bookmarked ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+              />
+            </svg>
+            <span>{bookmarking ? "处理中..." : `${bookmark_count}`}</span>
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+              />
+            </svg>
+            <span>分享</span>
           </button>
         </div>
       </article>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">评论 ({comments.length})</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">评论 ({comments.length})</h2>
 
         {user && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <form onSubmit={handleSubmitComment} className="space-y-4">
               <div>
-                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="comment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   发表评论
                 </label>
                 <textarea
@@ -382,7 +485,7 @@ const Article = () => {
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"
                   placeholder="写下你的评论..."
                   required
                 />
@@ -399,10 +502,10 @@ const Article = () => {
         )}
 
         {comments.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-md">
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
             <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-lg font-medium text-gray-800 mb-2">暂无评论</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-2">暂无评论</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               {user ? "快来发表第一条评论吧！" : "登录后可以发表评论"}
             </p>
           </div>
@@ -411,16 +514,16 @@ const Article = () => {
             {comments.map((comment: any) => (
               <div
                 key={comment.id}
-                className="bg-white rounded-lg shadow-md p-6"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <UserAvatar user={comment.user} size="lg" />
                     <div>
-                      <div className="font-medium text-gray-800">
+                      <div className="font-medium text-gray-800 dark:text-gray-100">
                         {comment.user?.username || "匿名用户"}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(comment.created_at)}
                       </div>
                     </div>
@@ -428,7 +531,7 @@ const Article = () => {
                   {canDeleteComment(comment) && (
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-200"
                       title="删除评论"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +545,7 @@ const Article = () => {
                     </button>
                   )}
                 </div>
-                <div className="mt-4 text-gray-700 whitespace-pre-wrap">
+                <div className="mt-4 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                   {comment.content}
                 </div>
               </div>
