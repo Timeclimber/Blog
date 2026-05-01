@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"blog/internal/models"
@@ -37,15 +38,36 @@ func GetArticleByID(id int) (*models.Article, error) {
 	row := DB.QueryRow(query, id)
 
 	article := &models.Article{}
-	user := &models.User{}
+	var userID sql.NullInt64
+	var username sql.NullString
+	var email sql.NullString
+	var gender sql.NullString
+	var avatarURL sql.NullString
+	var role sql.NullString
+	var userCreatedAt sql.NullTime
+
 	err := row.Scan(
 		&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
-		&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+		&userID, &username, &email, &gender, &avatarURL, &role, &userCreatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
-	article.User = user
+
+	if userID.Valid {
+		article.User = &models.User{
+			ID:        int(userID.Int64),
+			Username:  username.String,
+			Email:     email.String,
+			Gender:    gender.String,
+			AvatarURL: avatarURL.String,
+			Role:      role.String,
+		}
+		if userCreatedAt.Valid {
+			article.User.CreatedAt = userCreatedAt.Time
+		}
+	}
+
 	return article, nil
 }
 
@@ -68,15 +90,33 @@ func GetAllArticles() ([]*models.Article, error) {
 	articles := []*models.Article{}
 	for rows.Next() {
 		article := &models.Article{}
-		user := &models.User{}
+		var userID sql.NullInt64
+		var username sql.NullString
+		var email sql.NullString
+		var gender sql.NullString
+		var avatarURL sql.NullString
+		var role sql.NullString
+		var userCreatedAt sql.NullTime
 		err := rows.Scan(
 			&article.ID, &article.Title, &article.Content, &article.UserID, &article.Status, &article.Views, &article.CreatedAt, &article.UpdatedAt,
-			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+			&userID, &username, &email, &gender, &avatarURL, &role, &userCreatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		article.User = user
+		if userID.Valid {
+			article.User = &models.User{
+				ID:        int(userID.Int64),
+				Username:  username.String,
+				Email:     email.String,
+				Gender:    gender.String,
+				AvatarURL: avatarURL.String,
+				Role:      role.String,
+			}
+			if userCreatedAt.Valid {
+				article.User.CreatedAt = userCreatedAt.Time
+			}
+		}
 		articles = append(articles, article)
 	}
 
@@ -85,6 +125,213 @@ func GetAllArticles() ([]*models.Article, error) {
 	}
 
 	return articles, nil
+}
+
+// GetHotArticles 获取热门文章（按浏览量排序）
+func GetHotArticles(limit int) ([]models.Article, error) {
+	query := `
+		SELECT a.id, a.title, a.content, a.user_id, a.status, a.views, a.created_at, a.updated_at,
+			u.username, u.avatar_url
+		FROM articles a
+		JOIN users u ON a.user_id = u.id
+		WHERE a.status = 1
+		ORDER BY a.views DESC
+		LIMIT ?
+	`
+	rows, err := DB.Query(query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var articles []models.Article
+	for rows.Next() {
+		var article models.Article
+		var username, avatarURL string
+		err := rows.Scan(
+			&article.ID, &article.Title, &article.Content,
+			&article.UserID, &article.Status, &article.Views,
+			&article.CreatedAt, &article.UpdatedAt,
+			&username, &avatarURL,
+		)
+		if err != nil {
+			return nil, err
+		}
+		article.User = &models.User{
+			ID:        article.UserID,
+			Username:  username,
+			AvatarURL: avatarURL,
+		}
+		articles = append(articles, article)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return articles, nil
+}
+
+// GetTotalStats 获取网站总统计数据
+func GetTotalStats() (map[string]int, error) {
+	stats := make(map[string]int)
+
+	var articleCount int
+	err := DB.QueryRow(`SELECT COUNT(*) FROM articles WHERE status = 1`).Scan(&articleCount)
+	if err != nil {
+		return nil, err
+	}
+	stats["articles"] = articleCount
+
+	var userCount int
+	err = DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&userCount)
+	if err != nil {
+		return nil, err
+	}
+	stats["users"] = userCount
+
+	var commentCount int
+	err = DB.QueryRow(`SELECT COUNT(*) FROM comments`).Scan(&commentCount)
+	if err != nil {
+		return nil, err
+	}
+	stats["comments"] = commentCount
+
+	var messageCount int
+	err = DB.QueryRow(`SELECT COUNT(*) FROM messages`).Scan(&messageCount)
+	if err != nil {
+		return nil, err
+	}
+	stats["messages"] = messageCount
+
+	var totalViews int
+	err = DB.QueryRow(`SELECT COALESCE(SUM(views), 0) FROM articles`).Scan(&totalViews)
+	if err != nil {
+		return nil, err
+	}
+	stats["total_views"] = totalViews
+
+	return stats, nil
+}
+
+// FollowUser 关注用户
+func FollowUser(followerID, followingID int) error {
+	if followerID == followingID {
+		return nil
+	}
+	query := `INSERT INTO follows (follower_id, following_id, created_at) VALUES (?, ?, ?)`
+	_, err := DB.Exec(query, followerID, followingID, time.Now())
+	return err
+}
+
+// UnfollowUser 取消关注
+func UnfollowUser(followerID, followingID int) error {
+	query := `DELETE FROM follows WHERE follower_id = ? AND following_id = ?`
+	_, err := DB.Exec(query, followerID, followingID)
+	return err
+}
+
+// IsFollowing 检查是否已关注
+func IsFollowing(followerID, followingID int) (bool, error) {
+	query := `SELECT COUNT(*) FROM follows WHERE follower_id = ? AND following_id = ?`
+	row := DB.QueryRow(query, followerID, followingID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// GetFollowerCount 获取粉丝数
+func GetFollowerCount(userID int) (int, error) {
+	query := `SELECT COUNT(*) FROM follows WHERE following_id = ?`
+	row := DB.QueryRow(query, userID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// GetFollowingCount 获取关注数
+func GetFollowingCount(userID int) (int, error) {
+	query := `SELECT COUNT(*) FROM follows WHERE follower_id = ?`
+	row := DB.QueryRow(query, userID)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// GetFollowers 获取用户粉丝列表
+func GetFollowers(userID int) ([]models.User, error) {
+	query := `
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role, u.gender, u.created_at
+		FROM follows f
+		JOIN users u ON f.follower_id = u.id
+		WHERE f.following_id = ?
+		ORDER BY f.created_at DESC
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.AvatarURL, &user.Role, &user.Gender, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// GetFollowing 获取用户关注列表
+func GetFollowing(userID int) ([]models.User, error) {
+	query := `
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role, u.gender, u.created_at
+		FROM follows f
+		JOIN users u ON f.following_id = u.id
+		WHERE f.follower_id = ?
+		ORDER BY f.created_at DESC
+	`
+	rows, err := DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.AvatarURL, &user.Role, &user.Gender, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 // GetArticlesByUserID 获取用户的所有文章
@@ -332,15 +579,33 @@ func GetCommentsByArticleID(articleID int) ([]*models.Comment, error) {
 	comments := []*models.Comment{}
 	for rows.Next() {
 		comment := &models.Comment{}
-		user := &models.User{}
+		var userID sql.NullInt64
+		var username sql.NullString
+		var email sql.NullString
+		var gender sql.NullString
+		var avatarURL sql.NullString
+		var role sql.NullString
+		var userCreatedAt sql.NullTime
 		err := rows.Scan(
 			&comment.ID, &comment.Content, &comment.UserID, &comment.ArticleID, &comment.CreatedAt,
-			&user.ID, &user.Username, &user.Email, &user.Gender, &user.AvatarURL, &user.Role, &user.CreatedAt,
+			&userID, &username, &email, &gender, &avatarURL, &role, &userCreatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		comment.User = user
+		if userID.Valid {
+			comment.User = &models.User{
+				ID:        int(userID.Int64),
+				Username:  username.String,
+				Email:     email.String,
+				Gender:    gender.String,
+				AvatarURL: avatarURL.String,
+				Role:      role.String,
+			}
+			if userCreatedAt.Valid {
+				comment.User.CreatedAt = userCreatedAt.Time
+			}
+		}
 		comments = append(comments, comment)
 	}
 

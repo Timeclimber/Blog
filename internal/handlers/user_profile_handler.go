@@ -32,17 +32,46 @@ func GetUserProfile(c *gin.Context) {
 		articleCount = len(articles)
 	}
 
+	// 获取粉丝数和关注数
+	followerCount, _ := db.GetFollowerCount(userID)
+	followingCount, _ := db.GetFollowingCount(userID)
+
+	// 检查当前用户是否关注了目标用户（如果已登录）
+	isFollowing := false
+	currentUser, exists := c.Get("user")
+	if exists {
+		userMap, ok := currentUser.(gin.H)
+		if ok {
+			var currentID int
+			switch v := userMap["id"].(type) {
+			case int:
+				currentID = v
+			case float64:
+				currentID = int(v)
+			case int64:
+				currentID = int(v)
+			}
+
+			if currentID > 0 {
+				isFollowing, _ = db.IsFollowing(currentID, userID)
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"id":            user.ID,
-			"username":      user.Username,
-			"email":         user.Email,
-			"gender":        user.Gender,
-			"avatar_url":    user.AvatarURL,
-			"role":          user.Role,
-			"created_at":    user.CreatedAt,
-			"article_count": articleCount,
+			"id":             user.ID,
+			"username":       user.Username,
+			"email":          user.Email,
+			"gender":         user.Gender,
+			"avatar_url":     user.AvatarURL,
+			"role":           user.Role,
+			"created_at":     user.CreatedAt,
+			"article_count":  articleCount,
+			"follower_count": followerCount,
+			"following_count": followingCount,
+			"is_following":   isFollowing,
 		},
 	})
 }

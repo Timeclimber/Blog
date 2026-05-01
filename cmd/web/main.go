@@ -32,6 +32,9 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// 提供上传图片的访问服务
+	r.Static("/api/uploads", "./uploads/images")
+
 	// API路由
 	api := r.Group("/api")
 	{
@@ -47,41 +50,61 @@ func main() {
 		api.GET("/articles", handlers.GetAllArticles)
 		api.GET("/articles/search", handlers.SearchArticles)
 		api.POST("/articles", handlers.AuthMiddleware(), handlers.CreateArticle)
-		api.GET("/articles/detail/:id", handlers.GetArticle)
-		api.PUT("/articles/detail/:id", handlers.AuthMiddleware(), handlers.UpdateArticle)
-		api.DELETE("/articles/detail/:id", handlers.AuthMiddleware(), handlers.DeleteArticle)
+
+		// 使用子路由组避免通配符冲突
+		article := api.Group("/articles")
+		{
+			article.GET("/detail/:id", handlers.GetArticle)
+			article.PUT("/detail/:id", handlers.AuthMiddleware(), handlers.UpdateArticle)
+			article.DELETE("/detail/:id", handlers.AuthMiddleware(), handlers.DeleteArticle)
+			article.GET("/:id/comments", handlers.GetCommentsByArticleID)
+			article.GET("/:id/tags", handlers.GetTagsByArticleID)
+			article.POST("/:id/tags/:tag_id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.AddTagToArticle)
+			article.POST("/:id/like", handlers.AuthMiddleware(), handlers.LikeArticle)
+			article.DELETE("/:id/like", handlers.AuthMiddleware(), handlers.UnlikeArticle)
+			article.GET("/:id/likes", handlers.GetArticleLikes)
+			article.POST("/:id/bookmark", handlers.AuthMiddleware(), handlers.BookmarkArticle)
+			article.DELETE("/:id/bookmark", handlers.AuthMiddleware(), handlers.UnbookmarkArticle)
+		}
 
 		// 评论相关路由
 		api.POST("/comments", handlers.AuthMiddleware(), handlers.CreateComment)
-		api.GET("/articles/:article_id/comments", handlers.GetCommentsByArticleID)
 		api.DELETE("/comments/:id", handlers.AuthMiddleware(), handlers.DeleteComment)
 
 		// 标签相关路由
 		api.GET("/tags", handlers.GetAllTags)
 		api.POST("/tags", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.CreateTag)
-		api.GET("/articles/:article_id/tags", handlers.GetTagsByArticleID)
-		api.POST("/articles/:article_id/tags/:tag_id", handlers.AuthMiddleware(), handlers.AdminMiddleware(), handlers.AddTagToArticle)
 
 		// 留言板相关路由
 		api.POST("/messages", handlers.AuthMiddleware(), handlers.CreateMessage)
 		api.DELETE("/messages/:id", handlers.AuthMiddleware(), handlers.DeleteMessage)
 
-		// 点赞相关路由
-		api.POST("/articles/:id/like", handlers.AuthMiddleware(), handlers.LikeArticle)
-		api.DELETE("/articles/:id/like", handlers.AuthMiddleware(), handlers.UnlikeArticle)
-		api.GET("/articles/:id/likes", handlers.GetArticleLikes)
-
 		// 收藏相关路由
-		api.POST("/articles/:id/bookmark", handlers.AuthMiddleware(), handlers.BookmarkArticle)
-		api.DELETE("/articles/:id/bookmark", handlers.AuthMiddleware(), handlers.UnbookmarkArticle)
 		api.GET("/users/:id/bookmarks", handlers.AuthMiddleware(), handlers.GetUserBookmarks)
 
 		// 图片上传路由
 		api.POST("/upload/image", handlers.AuthMiddleware(), handlers.UploadImage)
 
+		// 关注/粉丝路由
+		api.POST("/users/:id/follow", handlers.AuthMiddleware(), handlers.FollowUserHandler)
+		api.DELETE("/users/:id/follow", handlers.AuthMiddleware(), handlers.UnfollowUserHandler)
+		api.GET("/users/:id/follow-status", handlers.GetFollowStatus)
+		api.GET("/users/:id/followers", handlers.GetUserFollowers)
+		api.GET("/users/:id/following", handlers.GetUserFollowing)
+
 		// 用户主页路由
 		api.GET("/users/:id/articles", handlers.GetUserArticles)
 		api.GET("/users/:id", handlers.GetUserProfile)
+
+		// 热门文章路由
+		api.GET("/articles/hot", handlers.GetHotArticles)
+
+		// 网站统计路由
+		api.GET("/stats", handlers.GetSiteStats)
+
+		// RSS Feed 路由
+		r.GET("/feed.xml", handlers.GetRSSFeed)
+		r.GET("/feed", handlers.GetRSSFeed)
 	}
 
 	// 启动服务器

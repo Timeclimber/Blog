@@ -1,5 +1,6 @@
 import MarkdownIt from "markdown-it"
 import hljs from "highlight.js/lib/core"
+import "highlight.js/styles/github-dark.css"
 import javascript from "highlight.js/lib/languages/javascript"
 import typescript from "highlight.js/lib/languages/typescript"
 import python from "highlight.js/lib/languages/python"
@@ -46,29 +47,15 @@ md.set({
   highlight: (str: string, lang: string) => {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return '<pre class="hljs rounded-lg"><code class="hljs">' +
-          hljs.highlight(str, { language: lang }).value +
-          '</code></pre>'
+        return hljs.highlight(str, { language: lang }).value
       } catch {
         // ignore
       }
     }
-    return '<pre class="hljs rounded-lg"><code class="hljs">' +
-      escapeHtml(str) +
-      '</code></pre>'
+    return ''
   },
 })
 
-function escapeHtml(text: string) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-// 读取时间估算
 const getReadingTime = (content: string) => {
   const chars = content.length
   const minutes = Math.max(1, Math.ceil(chars / 500))
@@ -150,7 +137,7 @@ const MarkdownRenderer = ({ content, className = "" }: MarkdownRendererProps) =>
           padding: 0.75em 1em;
           border-radius: 0.375rem;
         }
-        .markdown-body pre.hljs {
+        .markdown-body pre {
           background-color: #1f2937;
           color: #e5e7eb;
           padding: 1em;
@@ -160,8 +147,13 @@ const MarkdownRenderer = ({ content, className = "" }: MarkdownRendererProps) =>
           font-size: 0.875em;
           line-height: 1.6;
         }
-        .markdown-body pre.hljs code {
+        .markdown-body pre code {
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          background: none;
+          color: inherit;
+          padding: 0;
+          border-radius: 0;
+          font-size: inherit;
         }
         .markdown-body code {
           background-color: #f3f4f6;

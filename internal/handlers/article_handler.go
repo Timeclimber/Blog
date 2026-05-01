@@ -81,14 +81,12 @@ func GetArticle(c *gin.Context) {
 
 	comments, err := db.GetCommentsByArticleID(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取评论失败"})
-		return
+		comments = []*models.Comment{}
 	}
 
 	tags, err := db.GetTagsByArticleID(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "获取标签失败"})
-		return
+		tags = []*models.Tag{}
 	}
 
 	// 获取点赞数
@@ -143,13 +141,13 @@ func GetArticle(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
-			"article":         article,
-			"comments":        comments,
-			"tags":            tags,
-			"like_count":      likeCount,
-			"is_liked":        isLiked,
-			"bookmark_count":  bookmarkCount,
-			"is_bookmarked":   isBookmarked,
+			"article":        article,
+			"comments":       comments,
+			"tags":           tags,
+			"like_count":     likeCount,
+			"is_liked":       isLiked,
+			"bookmark_count": bookmarkCount,
+			"is_bookmarked":  isBookmarked,
 		},
 	})
 }

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react"
 import MarkdownIt from "markdown-it"
 import hljs from "highlight.js/lib/core"
+import "highlight.js/styles/github-dark.css"
 import javascript from "highlight.js/lib/languages/javascript"
 import typescript from "highlight.js/lib/languages/typescript"
 import python from "highlight.js/lib/languages/python"
@@ -187,6 +188,124 @@ const MarkdownEditor = ({ value, onChange, onImageUpload, placeholder, minHeight
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
+      <style>{`
+        .markdown-preview {
+          line-height: 1.8;
+          color: #374151;
+        }
+        .markdown-preview h1 {
+          font-size: 2em;
+          font-weight: 700;
+          margin-top: 1.5em;
+          margin-bottom: 0.5em;
+          padding-bottom: 0.3em;
+          border-bottom: 2px solid #e5e7eb;
+        }
+        .markdown-preview h2 {
+          font-size: 1.5em;
+          font-weight: 600;
+          margin-top: 1.4em;
+          margin-bottom: 0.5em;
+          padding-bottom: 0.2em;
+          border-bottom: 1px solid #f3f4f6;
+        }
+        .markdown-preview h3 {
+          font-size: 1.25em;
+          font-weight: 600;
+          margin-top: 1.3em;
+          margin-bottom: 0.4em;
+        }
+        .markdown-preview p {
+          margin-bottom: 1em;
+        }
+        .markdown-preview a {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+        .markdown-preview strong {
+          font-weight: 700;
+          color: #111827;
+        }
+        .markdown-preview em {
+          font-style: italic;
+        }
+        .markdown-preview ul {
+          list-style-type: disc;
+          padding-left: 1.5em;
+          margin-bottom: 1em;
+        }
+        .markdown-preview ol {
+          list-style-type: decimal;
+          padding-left: 1.5em;
+          margin-bottom: 1em;
+        }
+        .markdown-preview li {
+          margin-bottom: 0.25em;
+        }
+        .markdown-preview blockquote {
+          border-left: 4px solid #e5e7eb;
+          padding: 0.75em 1em;
+          margin: 0 0 1em 0;
+          color: #6b7280;
+          background-color: #f9fafb;
+          border-radius: 0.375rem;
+        }
+        .markdown-preview pre {
+          background-color: #1f2937;
+          color: #e5e7eb;
+          padding: 1em;
+          margin: 1em 0;
+          overflow-x: auto;
+          border-radius: 0.5rem;
+          font-size: 0.875em;
+          line-height: 1.6;
+        }
+        .markdown-preview pre code {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          background: none;
+          color: inherit;
+          padding: 0;
+          border-radius: 0;
+          font-size: inherit;
+        }
+        .markdown-preview code {
+          background-color: #f3f4f6;
+          color: #ef4444;
+          padding: 0.2em 0.4em;
+          border-radius: 0.25em;
+          font-size: 0.875em;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .markdown-preview img {
+          max-width: 100%;
+          height: auto;
+          margin: 1.5em 0;
+          border-radius: 0.5rem;
+        }
+        .markdown-preview hr {
+          border: none;
+          border-top: 2px solid #e5e7eb;
+          margin: 2em 0;
+        }
+        .markdown-preview table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 1em;
+        }
+        .markdown-preview table th,
+        .markdown-preview table td {
+          border: 1px solid #e5e7eb;
+          padding: 0.5em 0.75em;
+          text-align: left;
+        }
+        .markdown-preview table th {
+          background-color: #f9fafb;
+          font-weight: 600;
+        }
+        .markdown-preview table tr:nth-child(even) {
+          background-color: #f9fafb;
+        }
+      `}</style>
       {/* 工具栏 */}
       <div className="flex items-center gap-1 px-3 py-2 bg-gray-50 border-b border-gray-300 flex-wrap">
         {toolbarButtons.map((btn) => (
@@ -245,7 +364,7 @@ const MarkdownEditor = ({ value, onChange, onImageUpload, placeholder, minHeight
         )}
         {isPreview ? (
           <div
-            className="prose prose-lg max-w-none p-6 overflow-auto"
+            className="markdown-preview p-6 overflow-auto"
             style={{ minHeight }}
             dangerouslySetInnerHTML={{ __html: md.render(value || "*空内容*") }}
           />

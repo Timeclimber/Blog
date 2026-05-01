@@ -116,12 +116,16 @@ func createTables() error {
 	_, err = DB.Exec(`
 	CREATE TABLE IF NOT EXISTS tags (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL UNIQUE
+		name TEXT NOT NULL UNIQUE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`)
 	if err != nil {
 		return err
 	}
+
+	// 兼容旧数据库：如果 tags 表没有 created_at 列，则添加
+	DB.Exec(`ALTER TABLE tags ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`)
 
 	// 创建文章标签关联表
 	_, err = DB.Exec(`
@@ -227,6 +231,32 @@ func createTables() error {
 	}
 
 	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_bookmarks_article_id ON bookmarks(article_id)`)
+	if err != nil {
+		return err
+	}
+
+	// 创建关注/粉丝表
+	_, err = DB.Exec(`
+	CREATE TABLE IF NOT EXISTS follows (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		follower_id INTEGER NOT NULL,
+		following_id INTEGER NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(follower_id, following_id),
+		FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
+	)
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = DB.Exec(`CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id)`)
 	if err != nil {
 		return err
 	}

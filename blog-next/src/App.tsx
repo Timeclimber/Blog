@@ -8,6 +8,7 @@ import Article from "./pages/Article"
 import Profile from "./pages/Profile"
 import UserProfile from "./pages/UserProfile"
 import Message from "./pages/Message"
+import Tags from "./pages/Tags"
 import { ToastProvider } from "./components/Toast"
 import { ConfirmDialogProvider } from "./components/ConfirmDialog"
 import { AuthProvider } from "./contexts/AuthContext"
@@ -33,6 +34,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/user/:id" element={<UserProfile />} />
                   <Route path="/message" element={<Message />} />
+                  <Route path="/tags" element={<Tags />} />
                 </Routes>
               </div>
             </Router>
