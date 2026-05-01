@@ -63,7 +63,7 @@ func CreateComment(c *gin.Context) {
 
 // GetCommentsByArticleID 根据文章ID获取评论
 func GetCommentsByArticleID(c *gin.Context) {
-	articleIDStr := c.Param("article_id")
+	articleIDStr := c.Param("id")
 	articleID, err := strconv.Atoi(articleIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "无效的文章ID"})

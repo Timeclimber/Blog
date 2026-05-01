@@ -3,7 +3,7 @@ import { useToast } from "../components/Toast"
 import { useAuth } from "../contexts/AuthContext"
 import UserAvatar from "../components/UserAvatar"
 
-type Tab = "info" | "edit" | "password"
+type Tab = "info" | "edit" | "password" | "bookmarks"
 
 interface User {
   id: number
@@ -19,6 +19,8 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState<Tab>("info")
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [bookmarks, setBookmarks] = useState<any[]>([])
+  const [bookmarksLoading, setBookmarksLoading] = useState(false)
   const [editForm, setEditForm] = useState({
     username: "",
     email: "",
@@ -37,6 +39,26 @@ const Profile = () => {
   useEffect(() => {
     loadUser()
   }, [])
+
+  const loadBookmarks = async () => {
+    if (!user || !authToken) return
+    setBookmarksLoading(true)
+    try {
+      const res = await fetch(`/api/users/${user.id}/bookmarks`, {
+        headers: {
+          "Authorization": `Bearer ${authToken}`,
+        },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setBookmarks(data.data || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setBookmarksLoading(false)
+    }
+  }
 
   const loadUser = async () => {
     if (!authToken) {
@@ -236,6 +258,19 @@ const Profile = () => {
           }`}
         >
           修改密码
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("bookmarks")
+            loadBookmarks()
+          }}
+          className={`px-6 py-3 font-medium transition-colors ${
+            activeTab === "bookmarks"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          我的收藏
         </button>
       </div>
 
@@ -455,6 +490,50 @@ const Profile = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* 收藏标签页 */}
+      {activeTab === "bookmarks" && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">我的收藏</h2>
+          {bookmarksLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : bookmarks.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📚</div>
+              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-2">暂无收藏</h3>
+              <p className="text-gray-600 dark:text-gray-400">浏览文章时可以将喜欢的文章收藏起来</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {bookmarks.map((bookmark) => (
+                <div
+                  key={bookmark.id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <a
+                    href={`/article/${bookmark.id}`}
+                    className="text-lg font-bold text-gray-800 dark:text-gray-100 hover:text-blue-600 transition-colors"
+                  >
+                    {bookmark.title}
+                  </a>
+                  <p className="text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
+                    {bookmark.content.length > 150
+                      ? bookmark.content.substring(0, 150) + "..."
+                      : bookmark.content}
+                  </p>
+                  <div className="flex items-center gap-3 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    <span>{bookmark.user?.username}</span>
+                    <span>•</span>
+                    <span>{new Date(bookmark.created_at).toLocaleDateString("zh-CN")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
